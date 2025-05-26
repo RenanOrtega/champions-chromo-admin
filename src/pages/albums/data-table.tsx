@@ -1,26 +1,21 @@
 "use client"
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type ColumnFiltersState, type SortingState } from "@tanstack/react-table";
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteAlbum } from "@/services/album";
-import { Trash } from "lucide-react";
 import type { BaseData } from "@/types/table";
 
-interface DataTableProps<TData  extends BaseData, TValue> {
+interface DataTableProps<TData extends BaseData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
 }
 
-export function DataTable<TData  extends BaseData, TValue>({
+export function DataTable<TData extends BaseData, TValue>({
     columns,
     data,
 }: DataTableProps<TData, TValue>) {
-    const queryClient = useQueryClient();
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
         []
@@ -41,15 +36,8 @@ export function DataTable<TData  extends BaseData, TValue>({
         }
     })
 
-    const deleteMutation = useMutation({
-        mutationFn: (id: string) => deleteAlbum(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["albums"] });
-        }
-    })
-
     return (
-        <div className="m-5">
+        <div className="">
             <div className="flex justify-between items-center py-4">
                 <Input
                     placeholder="Filtrar nomes..."
@@ -57,17 +45,20 @@ export function DataTable<TData  extends BaseData, TValue>({
                     onChange={(event) =>
                         table.getColumn("name")?.setFilterValue(event.target.value)
                     }
-                    className="max-w-sm"
+                    className="max-w-sm bg-primary-foreground"
                 />
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-md border bg-primary-foreground">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => {
                                     return (
-                                        <TableHead key={header.id}>
+                                        <TableHead
+                                            key={header.id}
+                                            style={{ width: header.getSize() }}
+                                        >
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -77,9 +68,6 @@ export function DataTable<TData  extends BaseData, TValue>({
                                         </TableHead>
                                     )
                                 })}
-                                <TableHead>
-                                    Deletar
-                                </TableHead>
                             </TableRow>
                         ))}
                     </TableHeader>
@@ -95,32 +83,6 @@ export function DataTable<TData  extends BaseData, TValue>({
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}
-                                    <TableCell>
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" className="cursor-pointer">
-                                                    <Trash width={15} height={15} color="red" />
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Você tem certeza?</DialogTitle>
-                                                    <DialogDescription>
-                                                        Essa ação não pode ser desfeita. Tem certeza que deseja apagar permanentemente esse dado?
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                <DialogFooter>
-                                                    <Button type="submit"
-                                                        disabled={deleteMutation.isPending}
-                                                        onClick={() => deleteMutation.mutate(row.original.id)}
-                                                        className="cursor-pointer"
-                                                    >
-                                                        Sim
-                                                    </Button>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </TableCell>
                                 </TableRow>
                             ))
                         ) : (

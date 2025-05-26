@@ -9,6 +9,7 @@ import { Separator } from "./ui/separator"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "./ui/breadcrumb"
 import { SidebarItems } from "./app-sidebar-items"
 import React from "react"
+import { Toaster } from "sonner"
 
 function generateBreadcrumb(pathname: string) {
     const segments = pathname.split('/').filter(Boolean)
@@ -69,7 +70,10 @@ export default function Layout() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </header>
-                <Outlet />
+                <main className="bg-accent[300] h-full p-10">
+                    <Outlet />
+                </main>
+                <Toaster />
             </SidebarInset>
         </SidebarProvider>
     )

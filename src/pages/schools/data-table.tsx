@@ -1,16 +1,12 @@
 "use client"
 
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, useReactTable, type ColumnDef, type ColumnFiltersState } from "@tanstack/react-table";
 import { useState } from "react";
 import { CreateForm } from "./create-form";
-import { CreateForm as CreateAlbumForm } from "../albums/create-form";
-import { Plus, Trash } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteSchool } from "@/services/school";
 import type { BaseData } from "@/types/table";
 
 interface DataTableProps<TData extends BaseData, TValue> {
@@ -22,7 +18,6 @@ export function DataTable<TData extends BaseData, TValue>({
     columns,
     data,
 }: DataTableProps<TData, TValue>) {
-    const queryClient = useQueryClient();
 
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
         []
@@ -40,15 +35,8 @@ export function DataTable<TData extends BaseData, TValue>({
         }
     })
 
-    const deleteMutation = useMutation({
-        mutationFn: (id: string) => deleteSchool(id),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["schools"] });
-        }
-    })
-
     return (
-        <div className="m-5">
+        <div>
             <div className="flex justify-between items-center py-4">
                 <Input
                     placeholder="Filtrar nomes..."
@@ -56,7 +44,7 @@ export function DataTable<TData extends BaseData, TValue>({
                     onChange={(event) =>
                         table.getColumn("name")?.setFilterValue(event.target.value)
                     }
-                    className="max-w-sm"
+                    className="max-w-sm bg-primary-foreground"
                 />
                 <Dialog>
                     <DialogTrigger asChild>
@@ -73,7 +61,7 @@ export function DataTable<TData extends BaseData, TValue>({
                     </DialogContent>
                 </Dialog>
             </div>
-            <div className="rounded-md border">
+            <div className="rounded-md border bg-primary-foreground">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -90,12 +78,6 @@ export function DataTable<TData extends BaseData, TValue>({
                                         </TableHead>
                                     )
                                 })}
-                                <TableHead>
-                                    Adicionar Álbum
-                                </TableHead>
-                                <TableHead>
-                                    Deletar
-                                </TableHead>
                             </TableRow>
                         ))}
                     </TableHeader>
@@ -111,53 +93,6 @@ export function DataTable<TData extends BaseData, TValue>({
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}
-                                    <TableCell>
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" className="cursor-pointer">
-                                                    <Plus height={15} width={15} />
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="sm:max-w-[425px]">
-                                                <DialogHeader>
-                                                    <DialogTitle>Criar álbum</DialogTitle>
-                                                    <DialogDescription>
-                                                        Adicione um álbum nesta escola.
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                <CreateAlbumForm schoolId={row.original.id} />
-                                            </DialogContent>
-                                        </Dialog>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button variant="outline" className="cursor-pointer">
-                                                        <Trash width={15} height={15} color="red" />
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Você tem certeza?</DialogTitle>
-                                                    <DialogDescription>
-                                                        <div className="flex flex-col">
-                                                            Essa ação não pode ser desfeita. Tem certeza que deseja apagar permanentemente esse dado?
-                                                            <span className="mt-2 font-bold">Todos os albuns relacionados a está escola serão deletados!</span>
-                                                        </div>
-                                                    </DialogDescription>
-                                                </DialogHeader>
-                                                <DialogFooter>
-                                                    <Button type="submit" 
-                                                        disabled={deleteMutation.isPending} 
-                                                        onClick={() => deleteMutation.mutate(row.original.id)} 
-                                                        className="cursor-pointer"
-                                                    >
-                                                            Sim
-                                                    </Button>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
-                                    </TableCell>
                                 </TableRow>
                             ))
                         ) : (

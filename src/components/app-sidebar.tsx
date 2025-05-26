@@ -16,7 +16,6 @@ import {
 import { SidebarItems } from "./app-sidebar-items"
 import { Link, useLocation } from "react-router"
 import { ModeToggle } from "./mode-toggle"
-import { LogOut } from "lucide-react"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
@@ -25,7 +24,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar {...props}>
       <SidebarHeader>
         <div className="flex gap-2 items-center justify-between">
-          <span>Rei das Figurinhas</span>
+          <img src="/logo.png" alt="Rei das Figurinhas" className="h-8" />
+          <span className="font-bold">Rei das Figurinhas</span>
           <ModeToggle />
         </div>
       </SidebarHeader>
@@ -51,10 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarFooter>
-      <div className="text-sm flex gap-2 items-center justify-between">
-          <span>renanortega.dev@gmail.com</span>
-          <LogOut />
-        </div>
+
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

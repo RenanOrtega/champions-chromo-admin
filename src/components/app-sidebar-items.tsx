@@ -4,12 +4,16 @@ export const SidebarItems = {
             title: "Entidades",
             items: [
                 {
+                    title: "Início",
+                    url: "/",
+                },
+                {
                     title: "Escolas",
-                    url: "schools",
+                    url: "/schools",
                 },
                 {
                     title: "Álbuns",
-                    url: "albums",
+                    url: "/albums",
                 },
             ],
         },

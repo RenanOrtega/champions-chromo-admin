@@ -15,13 +15,11 @@ export const schoolCreateForm = z.object({
     state: z.string(),
 })
 
-export type SchoolCreateInput = z.infer<typeof schoolCreateForm>;
+export const schoolUpdateForm = z.object({
+    name: z.string(),
+    city: z.string(),
+    state: z.string(),
+})
 
-export const schoolsMock: School[] = [
-    {
-        "id": "67e46b4d335556bea30379bf",
-        "name": "Colégio São Paulo",
-        "city": "São Paulo",
-        "state": "SP"
-    }
-]
+export type SchoolCreateInput = z.infer<typeof schoolCreateForm>;
+export type SchoolUpdateInput = z.infer<typeof schoolUpdateForm>;
