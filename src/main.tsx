@@ -4,13 +4,16 @@ import './index.css'
 import App from './App.tsx'
 import { ThemeProvider } from './components/theme-provider.tsx';
 import { QueryProvider } from './providers/query-provider.tsx';
+import { AuthProvider } from './contexts/auth-context.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <BrowserRouter>
-    <QueryProvider>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
-    </QueryProvider>
+    <AuthProvider>
+      <QueryProvider>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </QueryProvider>
+    </AuthProvider>
   </BrowserRouter>
 )
