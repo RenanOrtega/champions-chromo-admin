@@ -6,12 +6,12 @@ import SchoolsPage from './pages/schools/page'
 import AlbumDetailsPage from './pages/albums/details-page'
 import SchoolDetailsPage from './pages/schools/details-page'
 import LoginPage from './pages/auth/login-page'
-import { useAuth } from './contexts/auth-context'
-import { ProtectedRoute } from './components/protected-route'
+import type { JSX } from 'react'
+import { useAuth } from './hooks/use-auth'
 
-function App() {
-  const { isAuthenticated, isLoading } = useAuth();
-
+function PrivateRoute({ children }: { children: JSX.Element }) {
+  const { user, isLoading } = useAuth();
+  
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -19,24 +19,20 @@ function App() {
       </div>
     );
   }
+  
+  return user ? children : <Navigate to="/login" />;
+}
 
+function App() {
   return (
     <Routes>
-      <Route
-        path="/login"
-        element={
-          isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
-        }
-      />
-      <Route path="/" element={
-        <ProtectedRoute fallback={<Navigate to="/login" replace />}>
-          <Layout />
-        </ProtectedRoute>}>
-        <Route index element={<HomePage />} />
-        <Route path="schools" element={<SchoolsPage />} />
-        <Route path="schools/:schoolId" element={<SchoolDetailsPage />} />
-        <Route path="albums" element={<AlbumsPage />} />
-        <Route path="albums/:albumId" element={<AlbumDetailsPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
+        <Route path="schools" element={<PrivateRoute><SchoolsPage /></PrivateRoute>} />
+        <Route path="schools/:schoolId" element={<PrivateRoute><SchoolDetailsPage /></PrivateRoute>} />
+        <Route path="albums" element={<PrivateRoute><AlbumsPage /></PrivateRoute>} />
+        <Route path="albums/:albumId" element={<PrivateRoute><AlbumDetailsPage /></PrivateRoute>} />
       </Route>
     </Routes>
   )

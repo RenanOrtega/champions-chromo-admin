@@ -7,13 +7,13 @@ import { QueryProvider } from './providers/query-provider.tsx';
 import { AuthProvider } from './contexts/auth-context.tsx';
 
 createRoot(document.getElementById('root')!).render(
-  <BrowserRouter>
-    <AuthProvider>
+  <AuthProvider>
+    <BrowserRouter>
       <QueryProvider>
         <ThemeProvider>
           <App />
         </ThemeProvider>
       </QueryProvider>
-    </AuthProvider>
-  </BrowserRouter>
+    </BrowserRouter>
+  </AuthProvider>
 )

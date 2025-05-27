@@ -9,18 +9,20 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
-import { useAuth } from "@/contexts/auth-context"
-import { useState } from "react"
 import { loginSchema, type LoginFormInput } from "@/types/auth"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useAuth } from "@/hooks/use-auth"
+import { useNavigate } from "react-router"
+import { useState } from "react"
 export function LoginForm({
     className,
     ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-    const { login } = useAuth();
-    const [errorMessage, setErrorMessage] = useState("");
-
+    const auth = useAuth();
+    const navigate = useNavigate();
+    const [error, setError] = useState('');
+    
     const form = useForm<LoginFormInput>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -30,9 +32,11 @@ export function LoginForm({
     });
 
     const onSubmit = async (values: LoginFormInput) => {
-        const response = await login(values.username, values.password);
-        if (!response.success) {
-            setErrorMessage(response.message);
+        const success = await auth.login(values.username, values.password);
+        if (success) {
+            navigate('/');
+        } else {
+            setError('Usuário ou senha inválidos');
         }
     };
 
@@ -75,11 +79,10 @@ export function LoginForm({
                                     </FormItem>
                                 )}
                             />
-                            {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
-
                             <Button type="submit" className="w-full">
                                 Entrar
                             </Button>
+                            {error && <p style={{ color: 'red' }}>{error}</p>}
                         </form>
                     </Form>
                 </CardContent>

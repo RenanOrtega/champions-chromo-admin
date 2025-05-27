@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { getMetrics } from "@/services/dashboard";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +8,8 @@ import { Album, School } from "lucide-react";
 import { Link } from "react-router";
 
 export default function HomePage() {
+    const { user } = useAuth();
+
     const { data, isLoading, error } = useQuery({
         queryKey: ['metrics'],
         queryFn: getMetrics,
@@ -34,8 +37,8 @@ export default function HomePage() {
 
     return (
         <div className="flex flex-col">
-            <span className="text-2xl font-bold">Bom dia, Administrador!</span>
-            <span className="text-sm text-gray-600 mb-10">Administrador - admin@reidasfigurihas.com.br</span>
+            <span className="text-2xl font-bold">Bom dia, {user?.username}</span>
+            <span className="text-sm text-gray-600 mb-10">Administrador</span>
             <div className="flex flex-col gap-7">
                 <div className="flex gap-5">
                     <Card className={cn("w-[300px]")}>

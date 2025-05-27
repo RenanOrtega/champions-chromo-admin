@@ -14,20 +14,21 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { SidebarItems } from "./app-sidebar-items"
-import { Link, useLocation } from "react-router"
+import { Link, useLocation, useNavigate } from "react-router"
 import { ModeToggle } from "./mode-toggle"
-import { useAuth } from "@/contexts/auth-context"
 import { Button } from "./ui/button"
 import { LogOut, User } from "lucide-react"
 import { Separator } from "./ui/separator"
+import { useAuth } from "@/hooks/use-auth"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
-
-  const { user, logout, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout();
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -63,7 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <Separator orientation="horizontal" />
       <SidebarFooter>
-        {isAuthenticated && user ? (
+        {user ? (
           <>
             <span className="text-sm flex gap-3">
               <User />

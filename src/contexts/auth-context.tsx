@@ -1,85 +1,53 @@
 import { authService } from "@/services/auth";
-import type { AuthContextType, User } from "@/types/auth";
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import type { User } from "@/types/auth";
+import { createContext, useEffect, useState, type ReactNode } from "react";
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-interface AuthProviderProps {
-    children: ReactNode;
+interface AuthContextType {
+    user: User | null;
+    isLoading: boolean;
+    login: (username: string, password: string) => Promise<boolean>;
+    logout: () => void;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const checkAuth = async () => {
+    async function fetchCurrentUser() {
         try {
-            setIsLoading(true);
-            const userData = await authService.getCurrentUser();
-            setUser(userData);
-        } catch (error) {
+            const response = await authService.getCurrentUser();
+            setUser(response);
+        } catch {
             setUser(null);
         } finally {
             setIsLoading(false);
         }
-    };
-
-    const login = async (username: string, password: string) => {
-        try {
-            const response = await authService.login({ username, password });
-            setUser(response.user);
-            return { success: true, message: response.message };
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Erro ao fazer login';
-            return { success: false, message };
-        }
-    };
-
-    const register = async (username: string, password: string) => {
-        try {
-            const response = await authService.register({ username, password });
-            setUser(response.user);
-            return { success: true, message: response.message };
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Erro ao registrar usuário';
-            return { success: false, message };
-        }
-    };
-
-    const logout = async () => {
-        try {
-            await authService.logout();
-            setUser(null);
-        } catch (error) {
-            setUser(null);
-        }
-    };
+    }
 
     useEffect(() => {
-        checkAuth();
+        fetchCurrentUser();
     }, []);
 
-    const value: AuthContextType = {
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        login,
-        register,
-        logout,
-        checkAuth,
-    };
+    async function login(username: string, password: string) {
+        try {
+            await authService.login({ username, password });
+            await fetchCurrentUser();
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    function logout() {
+        authService.logout();
+        setUser(null);
+    }
 
     return (
-        <AuthContext.Provider value={value}>
+        <AuthContext.Provider value={{ user, isLoading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
-};
-
-export const useAuth = (): AuthContextType => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth deve ser usado dentro de um AuthProvider');
-    }
-    return context;
-};
+}

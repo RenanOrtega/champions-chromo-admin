@@ -22,16 +22,6 @@ export interface AuthResponse {
     user: User;
 }
 
-export interface AuthContextType {
-    user: User | null;
-    isLoading: boolean;
-    isAuthenticated: boolean;
-    login: (username: string, password: string) => Promise<{ success: boolean; message: string }>;
-    register: (username: string, password: string, email: string) => Promise<{ success: boolean; message: string }>;
-    logout: () => Promise<void>;
-    checkAuth: () => Promise<void>;
-}
-
 export const loginSchema = z.object({
     username: z
         .string()
