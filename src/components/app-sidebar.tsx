@@ -53,7 +53,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       asChild
                       isActive={location.pathname === subItem.url}
                     >
-                      <Link to={subItem.url}>{subItem.title}</Link>
+                      <Link to={subItem.url} className="flex gap-2 items-center">
+                        {subItem.icon}{subItem.title}
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

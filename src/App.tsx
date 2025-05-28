@@ -8,6 +8,7 @@ import SchoolDetailsPage from './pages/schools/details-page'
 import LoginPage from './pages/auth/login-page'
 import type { JSX } from 'react'
 import { useAuth } from './hooks/use-auth'
+import CupomsPage from './pages/cupoms/page'
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -33,6 +34,7 @@ function App() {
         <Route path="schools/:schoolId" element={<PrivateRoute><SchoolDetailsPage /></PrivateRoute>} />
         <Route path="albums" element={<PrivateRoute><AlbumsPage /></PrivateRoute>} />
         <Route path="albums/:albumId" element={<PrivateRoute><AlbumDetailsPage /></PrivateRoute>} />
+        <Route path="cupoms" element={<PrivateRoute><CupomsPage /></PrivateRoute>} />
       </Route>
     </Routes>
   )

@@ -34,7 +34,6 @@ export default function DetailsPage() {
         enabled: !!schoolId,
     });
 
-    // Mutation para atualizar o álbum
     const mutation = useMutation({
         mutationFn: (data: SchoolUpdateInput) => updateSchool(schoolId!, data),
         onSuccess: () => {
