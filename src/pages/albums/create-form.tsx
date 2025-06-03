@@ -1,3 +1,4 @@
+import { ImageUploader } from "@/components/image-uploader";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -6,10 +7,11 @@ import { createAlbum } from "@/services/album";
 import { albumCreateForm, type AlbumCreateInput } from "@/types/album";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import axios from "axios";
 
 interface CreateFormProps {
     schoolId: string
@@ -18,6 +20,7 @@ interface CreateFormProps {
 export function CreateForm({ schoolId }: CreateFormProps) {
     const queryClient = useQueryClient();
     const [isPending, startTransition] = useTransition();
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const mutation = useMutation({
         mutationFn: (data: AlbumCreateInput) => createAlbum(data, schoolId),
@@ -25,6 +28,7 @@ export function CreateForm({ schoolId }: CreateFormProps) {
             queryClient.invalidateQueries({ queryKey: ['albums'] })
             toast.success("Álbum criado com sucesso!")
             form.reset()
+            setSelectedFile(null) // Limpar arquivo selecionado
         },
         onError: () => {
             toast.error("Erro ao criar Álbum")
@@ -43,9 +47,44 @@ export function CreateForm({ schoolId }: CreateFormProps) {
         },
     })
 
+    const uploadImage = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "album_upload");
+        formData.append("folder", "figurinhas");
+
+        const response = await axios.post(
+            "https://api.cloudinary.com/v1_1/dshyu21tz/image/upload",
+            formData
+        );
+
+        return response.data.secure_url;
+    };
+
     const onSubmit = async (values: AlbumCreateInput) => {
         startTransition(async () => {
-            mutation.mutate(values);
+            try {
+                let coverImageUrl = values.coverImage;
+
+                // Se há um arquivo selecionado, fazer upload primeiro
+                if (selectedFile) {
+                    toast.loading("Enviando imagem...");
+                    coverImageUrl = await uploadImage(selectedFile);
+                    toast.dismiss();
+                }
+
+                // Criar o álbum com a URL da imagem
+                const albumData = {
+                    ...values,
+                    coverImage: coverImageUrl
+                };
+
+                mutation.mutate(albumData);
+            } catch (error) {
+                toast.dismiss();
+                toast.error("Erro ao enviar imagem!");
+                console.error("Upload error:", error);
+            }
         })
     }
 
@@ -68,11 +107,15 @@ export function CreateForm({ schoolId }: CreateFormProps) {
                 <FormField
                     control={form.control}
                     name="coverImage"
-                    render={({ field }) => (
+                    render={({ }) => (
                         <FormItem>
-                            <FormLabel>Link imagem</FormLabel>
+                            <FormLabel>Capa do Álbum</FormLabel>
                             <FormControl>
-                                <Input {...field} />
+                                <div className="space-y-2">
+                                    <ImageUploader
+                                        onFileSelect={setSelectedFile}
+                                    />
+                                </div>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -95,14 +138,14 @@ export function CreateForm({ schoolId }: CreateFormProps) {
                     control={form.control}
                     name="hasCommon"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-2">
                             <FormControl>
                                 <Checkbox
                                     checked={field.value}
                                     onCheckedChange={field.onChange}
                                 />
                             </FormControl>
-                            <div className="space-y-1 leading-none">
+                            <div className="leading-none">
                                 <FormLabel className="text-sm font-medium">
                                     Figurinhas Comuns
                                 </FormLabel>
@@ -117,14 +160,14 @@ export function CreateForm({ schoolId }: CreateFormProps) {
                     control={form.control}
                     name="hasLegend"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-2">
                             <FormControl>
                                 <Checkbox
                                     checked={field.value}
                                     onCheckedChange={field.onChange}
                                 />
                             </FormControl>
-                            <div className="space-y-1 leading-none">
+                            <div className="leading-none">
                                 <FormLabel className="text-sm font-medium">
                                     Figurinhas Legend
                                 </FormLabel>
@@ -139,14 +182,14 @@ export function CreateForm({ schoolId }: CreateFormProps) {
                     control={form.control}
                     name="hasA4"
                     render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-2">
                             <FormControl>
                                 <Checkbox
                                     checked={field.value}
                                     onCheckedChange={field.onChange}
                                 />
                             </FormControl>
-                            <div className="space-y-1 leading-none">
+                            <div className="leading-none">
                                 <FormLabel className="text-sm font-medium">
                                     Figurinhas A4
                                 </FormLabel>
@@ -157,7 +200,9 @@ export function CreateForm({ schoolId }: CreateFormProps) {
                         </FormItem>
                     )}
                 />
-                <Button disabled={isPending} type="submit">Criar</Button>
+                <Button disabled={isPending} type="submit">
+                    {isPending ? "Criando..." : "Criar"}
+                </Button>
             </form>
         </Form>
     )

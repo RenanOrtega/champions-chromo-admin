@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Cupom } from "@/types/cupom"
 import { Badge } from "@/components/ui/badge"
-
+    
 export const columns: ColumnDef<Cupom>[] = [
     {
         accessorKey: "code",

@@ -10,18 +10,21 @@ import { getSchoolById } from "@/services/school";
 import { type AlbumCreateInput, type AlbumUpdateInput, albumUpdateForm } from "@/types/album";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { ArrowLeft, Save, School, MapPin } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
+import { ImageUploader } from "@/components/image-uploader";
+import axios from "axios";
 
 export default function DetailsPage() {
     const { albumId } = useParams<{ albumId: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [isPending, startTransition] = useTransition();
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     // Query para buscar os dados do álbum
     const { data: album, isLoading, error } = useQuery({
@@ -78,8 +81,26 @@ export default function DetailsPage() {
 
     const onSubmit = async (values: AlbumCreateInput) => {
         startTransition(async () => {
+            if (selectedFile) {
+                const uploadedUrl = await uploadImage(selectedFile);
+                values.coverImage = uploadedUrl;
+            }
             mutation.mutate(values);
         });
+    };
+
+    const uploadImage = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "album_upload");
+        formData.append("folder", "figurinhas");
+
+        const response = await axios.post(
+            "https://api.cloudinary.com/v1_1/dshyu21tz/image/upload",
+            formData
+        );
+
+        return response.data.secure_url;
     };
 
     const handleGoBack = () => {
@@ -89,7 +110,12 @@ export default function DetailsPage() {
     const handleGoSchool = () => {
         navigate(`/schools/${album?.schoolId}`)
     }
-    
+
+    const handleRemoveCurrentImage = () => {
+        form.setValue("coverImage", "");
+        setSelectedFile(null);
+    };
+
     if (isLoading || isLoadingSchool) {
         return (
             <div className="container mx-auto p-6">
@@ -149,19 +175,38 @@ export default function DetailsPage() {
                                             </FormItem>
                                         )}
                                     />
-                                    <FormField
-                                        control={form.control}
-                                        name="coverImage"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Link da imagem</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="URL da imagem de capa" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
+
+                                    {/* Seção de upload/preview da imagem */}
+                                    <div className="space-y-4">
+                                        <FormLabel>Capa do Álbum</FormLabel>
+
+                                        {form.watch("coverImage") && !selectedFile ? (
+                                            // Mostra a imagem atual do álbum
+                                            <div className="flex items-center space-x-3">
+                                                <img
+                                                    src={form.watch("coverImage")}
+                                                    alt="Capa atual"
+                                                    className="w-12 h-12 object-cover rounded-lg border"
+                                                />
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-gray-700">Imagem atual</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleRemoveCurrentImage}
+                                                        className="text-xs text-red-600 hover:text-red-800 underline cursor-pointer"
+                                                    >
+                                                        Remover
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            // Mostra o uploader quando não há imagem ou foi removida
+                                            <ImageUploader
+                                                onFileSelect={setSelectedFile}
+                                            />
                                         )}
-                                    />
+                                    </div>
+
                                     <FormField
                                         control={form.control}
                                         name="totalStickers"
@@ -179,6 +224,7 @@ export default function DetailsPage() {
                                             </FormItem>
                                         )}
                                     />
+
                                     <div className="space-y-4">
                                         <h3 className="text-lg font-medium">Características</h3>
                                         <FormField
