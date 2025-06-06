@@ -70,7 +70,7 @@ export default function Layout() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </header>
-                <main className="bg-accent[300] h-full p-10">
+                <main className="h-full p-10">
                     <Outlet />
                 </main>
                 <Toaster />

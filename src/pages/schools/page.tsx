@@ -114,6 +114,14 @@ export default function SchoolsPage() {
     ]
 
     return (
-        <DataTable columns={columnsWithActions} data={data || []} />
+        <div className="container mx-auto">
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold">Escolas</h1>
+                <p className="text-gray-600 mt-1">
+                    {data?.length || 0} pedido{(data?.length || 0) !== 1 ? 's' : ''} encontrado{(data?.length || 0) !== 1 ? 's' : ''}
+                </p>
+            </div>
+            <DataTable columns={columnsWithActions} data={data || []} />
+        </div>
     );
 } 

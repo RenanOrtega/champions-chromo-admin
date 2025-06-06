@@ -1,4 +1,4 @@
-import { Album, Home, School, Ticket } from "lucide-react";
+import { Album, Home, Package, School, Ticket } from "lucide-react";
 
 export const SidebarItems = {
     navMain: [
@@ -19,11 +19,16 @@ export const SidebarItems = {
                     title: "Álbuns",
                     url: "/albums",
                     icon: <Album />
-                }, 
+                },
                 {
                     title: "Cupons",
                     url: "/cupoms",
                     icon: <Ticket />
+                }, 
+                {
+                    title: "Pedidos",
+                    url: "/orders",
+                    icon: <Package />
                 },
             ],
         },

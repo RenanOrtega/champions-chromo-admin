@@ -52,7 +52,7 @@ export default function CupomsPage() {
             cell: ({ row }) => {
                 const isActive = row.getValue("isActive") as boolean
                 const cupomId = row.original.id
-                
+
                 const handleStatusChange = (checked: boolean) => {
                     startTransition(() => {
                         updateCouponMutation.mutate({
@@ -61,10 +61,10 @@ export default function CupomsPage() {
                         });
                     });
                 }
-        
-                const isThisRowUpdating = updateCouponMutation.isPending && 
+
+                const isThisRowUpdating = updateCouponMutation.isPending &&
                     updateCouponMutation.variables?.id === cupomId;
-        
+
                 return (
                     <div className="flex items-center gap-2">
                         <Switch
@@ -143,6 +143,14 @@ export default function CupomsPage() {
     }
 
     return (
-        <DataTable columns={columnsWithActions} data={data || []} />
+        <div className="container mx-auto">
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold">Cupons</h1>
+                <p className="text-gray-600 mt-1">
+                    {data?.length || 0} {(data?.length || 0) !== 1 ? 'cupons' : 'cupom'} encontrado{(data?.length || 0) !== 1 ? 's' : ''}
+                </p>
+            </div>
+            <DataTable columns={columnsWithActions} data={data || []} />
+        </div>
     );
 } 

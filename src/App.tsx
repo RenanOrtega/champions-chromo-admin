@@ -5,10 +5,12 @@ import AlbumsPage from './pages/albums/page'
 import SchoolsPage from './pages/schools/page'
 import AlbumDetailsPage from './pages/albums/details-page'
 import SchoolDetailsPage from './pages/schools/details-page'
+import OrdersDetailsPage from './pages/orders/details-page'
 import LoginPage from './pages/auth/login-page'
 import type { JSX } from 'react'
 import { useAuth } from './hooks/use-auth'
 import CupomsPage from './pages/cupoms/page'
+import OrderSummaryPage from './pages/orders/page'
 
 function PrivateRoute({ children }: { children: JSX.Element }) {
   const { user, isLoading } = useAuth();
@@ -35,6 +37,8 @@ function App() {
         <Route path="albums" element={<PrivateRoute><AlbumsPage /></PrivateRoute>} />
         <Route path="albums/:albumId" element={<PrivateRoute><AlbumDetailsPage /></PrivateRoute>} />
         <Route path="cupoms" element={<PrivateRoute><CupomsPage /></PrivateRoute>} />
+        <Route path="orders" element={<PrivateRoute><OrderSummaryPage /></PrivateRoute>} />
+        <Route path="orders/:orderSummaryId" element={<PrivateRoute><OrdersDetailsPage /></PrivateRoute>} />
       </Route>
     </Routes>
   )

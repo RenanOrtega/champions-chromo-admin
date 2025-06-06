@@ -98,6 +98,14 @@ export default function AlbumsPage() {
     }
 
     return (
-        <DataTable columns={columnsWithActions} data={data || []} />
+        <div className="container mx-auto">
+            <div className="mb-6">
+                <h1 className="text-2xl font-bold">Álbuns</h1>
+                <p className="text-gray-600 mt-1">
+                    {data?.length || 0} {(data?.length || 0) !== 1 ? 'álbuns' : 'álbum'} encontrado{(data?.length || 0) !== 1 ? 's' : ''}
+                </p>
+            </div>
+            <DataTable columns={columnsWithActions} data={data || []} />
+        </div>
     );
 } 
