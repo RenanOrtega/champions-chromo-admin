@@ -62,6 +62,9 @@ export default function DetailsPage() {
             hasA4: false,
             hasLegend: false,
             hasCommon: false,
+            commonPrice: 1,
+            legendPrice: 5,
+            a4Price: 15
         },
     });
 
@@ -75,6 +78,9 @@ export default function DetailsPage() {
                 hasA4: album.hasA4,
                 hasLegend: album.hasLegend,
                 hasCommon: album.hasCommon,
+                a4Price: album.a4Price,
+                commonPrice: album.commonPrice,
+                legendPrice: album.legendPrice
             });
         }
     }, [album, form]);
@@ -242,9 +248,26 @@ export default function DetailsPage() {
                                                         <FormLabel className="text-sm font-medium">
                                                             Figurinhas Comuns
                                                         </FormLabel>
-                                                        <p className="text-sm text-muted-foreground">
+                                                        <p className="text-sm text-muted-foreground mb-3">
                                                             Álbum contém figurinhas comuns
                                                         </p>
+                                                        <FormField
+                                                            control={form.control}
+                                                            name="commonPrice"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>Preço</FormLabel>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            type="number"
+                                                                            {...field}
+                                                                            placeholder="Preço da figurinha comum"
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
                                                     </div>
                                                 </FormItem>
                                             )}
@@ -264,9 +287,26 @@ export default function DetailsPage() {
                                                         <FormLabel className="text-sm font-medium">
                                                             Figurinhas Legend
                                                         </FormLabel>
-                                                        <p className="text-sm text-muted-foreground">
+                                                        <p className="text-sm text-muted-foreground mb-3">
                                                             Álbum contém figurinhas legends
                                                         </p>
+                                                        <FormField
+                                                            control={form.control}
+                                                            name="legendPrice"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>Preço</FormLabel>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            type="number"
+                                                                            {...field}
+                                                                            placeholder="Preço da figurinha legend"
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
                                                     </div>
                                                 </FormItem>
                                             )}
@@ -286,9 +326,26 @@ export default function DetailsPage() {
                                                         <FormLabel className="text-sm font-medium">
                                                             Figurinhas A4
                                                         </FormLabel>
-                                                        <p className="text-sm text-muted-foreground">
+                                                        <p className="text-sm text-muted-foreground mb-3">
                                                             Álbum contém figurinhas em formato A4
                                                         </p>
+                                                        <FormField
+                                                            control={form.control}
+                                                            name="a4Price"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>Preço</FormLabel>
+                                                                    <FormControl>
+                                                                        <Input
+                                                                            type="number"
+                                                                            {...field}
+                                                                            placeholder="Preço da figurinha A4"
+                                                                        />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
                                                     </div>
                                                 </FormItem>
                                             )}

@@ -9,6 +9,9 @@ export type Album = {
     hasA4: boolean
     hasLegend: boolean
     hasCommon: boolean
+    a4Price: number,
+    legendPrice: number,
+    commonPrice: number
 }
 
 export const albumCreateForm = z.object({
@@ -18,6 +21,9 @@ export const albumCreateForm = z.object({
     hasA4: z.boolean(),
     hasLegend: z.boolean(),
     hasCommon: z.boolean(),
+    a4Price: z.coerce.number(),
+    legendPrice: z.coerce.number(),
+    commonPrice: z.coerce.number()
 })
 
 export const albumUpdateForm = z.object({
@@ -27,6 +33,9 @@ export const albumUpdateForm = z.object({
     hasA4: z.boolean(),
     hasLegend: z.boolean(),
     hasCommon: z.boolean(),
+    a4Price: z.coerce.number(),
+    legendPrice: z.coerce.number(),
+    commonPrice: z.coerce.number()
 })
 
 export type AlbumCreateInput = z.infer<typeof albumCreateForm>;
