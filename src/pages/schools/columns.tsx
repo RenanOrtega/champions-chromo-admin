@@ -15,5 +15,22 @@ export const columns: ColumnDef<School>[] = [
     {
         accessorKey: "state",
         header: "Estado",
+    },
+    {
+        accessorKey: "shippingCost",
+        header: () => {
+            return (
+                <div className="flex justify-center">
+                    Frete
+                </div>
+            )
+        },
+        cell: ({ row }) => {
+            return (
+                <div className="flex justify-center">
+                    R$ {row.getValue("shippingCost") ?? 0}
+                </div>
+            )
+        },
     }
 ]

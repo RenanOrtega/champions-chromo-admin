@@ -104,4 +104,76 @@ export const columns: ColumnDef<Album>[] = [
             )
         },
     },
+    {
+        accessorKey: "commonPrice",
+        size: 80,
+        header: ({ column }) => {
+            return (
+                <div className="flex justify-center">
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Preço Comum
+                        <ArrowUpDown className="ml-2 h-4" />
+                    </Button>
+                </div>
+            )
+        },
+        cell: ({ row }) => {
+            return (
+                <div className="flex justify-center">
+                    R$ {row.getValue("commonPrice")}
+                </div>
+            )
+        },
+    },
+    {
+        accessorKey: "legendPrice",
+        size: 80,
+        header: ({ column }) => {
+            return (
+                <div className="flex justify-center">
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Preço Legend
+                        <ArrowUpDown className="ml-2 h-4" />
+                    </Button>
+                </div>
+            )
+        },
+        cell: ({ row }) => {
+            return (
+                <div className="flex justify-center">
+                    R$ {row.getValue("legendPrice")}
+                </div>
+            )
+        },
+    },
+    {
+        accessorKey: "a4Price",
+        size: 80,
+        header: ({ column }) => {
+            return (
+                <div className="flex justify-center">
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Preço A4
+                        <ArrowUpDown className="ml-2 h-4" />
+                    </Button>
+                </div>
+            )
+        },
+        cell: ({ row }) => {
+            return (
+                <div className="flex justify-center">
+                    R$ {row.getValue("a4Price")}
+                </div>
+            )
+        },
+    },
 ]

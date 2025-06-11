@@ -33,6 +33,7 @@ export function CreateForm() {
             name: "",
             city: "",
             state: "",
+            shippingCost: 0
         },
     })
 
@@ -85,7 +86,23 @@ export function CreateForm() {
                             </FormItem>
                         )}
                     />
-
+                    <FormField
+                        control={form.control}
+                        name="shippingCost"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Frete</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="number"
+                                        {...field}
+                                        placeholder="Frete"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <Button disabled={isPending || mutation.isPending} type="submit" className="w-full">
                         {(isPending || mutation.isPending) ? (
                             <>

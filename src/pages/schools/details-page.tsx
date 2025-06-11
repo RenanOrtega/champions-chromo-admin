@@ -256,7 +256,7 @@ export default function DetailsPage() {
                                                 </FormItem>
                                             )}
                                         />
-                                        
+
                                         {/* Grid responsivo para Estado e Cidade */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                             <FormField
@@ -280,6 +280,23 @@ export default function DetailsPage() {
                                                         <FormLabel>Cidade</FormLabel>
                                                         <FormControl>
                                                             <Input {...field} placeholder="Cidade da escola" />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="shippingCost"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Frete</FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                type="number"
+                                                                {...field}
+                                                                placeholder="Frete"
+                                                            />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
@@ -341,7 +358,7 @@ export default function DetailsPage() {
                                                         {album.totalStickers} figurinhas
                                                     </p>
                                                 </div>
-                                                <Button 
+                                                <Button
                                                     onClick={() => handleGoAlbum(album.id)}
                                                     size="sm"
                                                     className="flex-shrink-0"

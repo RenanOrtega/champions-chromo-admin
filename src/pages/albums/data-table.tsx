@@ -37,16 +37,18 @@ export function DataTable<TData extends BaseData, TValue>({
     })
 
     return (
-        <div className="">
-            <div className="flex justify-between items-center py-4">
-                <Input
-                    placeholder="Filtrar nomes..."
-                    value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-                    onChange={(event) =>
-                        table.getColumn("name")?.setFilterValue(event.target.value)
-                    }
-                    className="max-w-sm bg-primary-foreground"
-                />
+        <div>
+            <div className="flex gap-3">
+                <div className="flex justify-between items-center py-4">
+                    <Input
+                        placeholder="Filtrar nomes..."
+                        value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+                        onChange={(event) =>
+                            table.getColumn("name")?.setFilterValue(event.target.value)
+                        }
+                        className="max-w-sm bg-primary-foreground"
+                    />
+                </div>
             </div>
             <div className="rounded-md border bg-primary-foreground">
                 <Table>
