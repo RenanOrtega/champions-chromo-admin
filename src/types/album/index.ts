@@ -16,14 +16,14 @@ export type Album = {
 
 export const albumCreateForm = z.object({
     name: z.string(),
-    coverImage: z.string(),
+    coverImage: z.string().optional(),
     totalStickers: z.coerce.number().min(1, "Insira um número válido"),
     hasA4: z.boolean(),
     hasLegend: z.boolean(),
     hasCommon: z.boolean(),
-    a4Price: z.coerce.number(),
-    legendPrice: z.coerce.number(),
-    commonPrice: z.coerce.number()
+    a4Price: z.coerce.number().optional(),
+    legendPrice: z.coerce.number().optional(),
+    commonPrice: z.coerce.number().optional()
 })
 
 export const albumUpdateForm = z.object({

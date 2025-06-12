@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { updateAlbum, getAlbumById } from "@/services/album";
 import { getSchoolById } from "@/services/school";
-import { type AlbumCreateInput, type AlbumUpdateInput, albumUpdateForm } from "@/types/album";
+import { type AlbumUpdateInput, albumUpdateForm } from "@/types/album";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, useTransition } from "react";
@@ -85,7 +85,7 @@ export default function DetailsPage() {
         }
     }, [album, form]);
 
-    const onSubmit = async (values: AlbumCreateInput) => {
+    const onSubmit = async (values: AlbumUpdateInput) => {
         startTransition(async () => {
             if (selectedFile) {
                 const uploadedUrl = await uploadImage(selectedFile);

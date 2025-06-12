@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { ArrowLeft, Save, BookOpen, Book, AlertTriangle, Palette } from "lucide-react";
@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { getSchoolById, updateSchool } from "@/services/school";
 import { schoolUpdateForm, type SchoolUpdateInput } from "@/types/school";
 import { getAlbumsBySchoolId } from "@/services/album";
+import axios from "axios";
+import { ImageUploader } from "@/components/image-uploader";
 
 // Cores pré-definidas para o fundo do aviso
 const warningColors = [
@@ -33,6 +35,7 @@ export default function DetailsPage() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [isPending, startTransition] = useTransition();
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const { data: school, isLoading, error } = useQuery({
         queryKey: ['school', schoolId],
@@ -65,6 +68,7 @@ export default function DetailsPage() {
             city: "",
             state: "",
             warning: "",
+            imageUrl: "",
             bgWarningColor: "#fef3c7"
         },
     });
@@ -76,15 +80,34 @@ export default function DetailsPage() {
                 city: school.city,
                 state: school.state,
                 warning: school.warning || "",
-                bgWarningColor: school.bgWarningColor || "#fef3c7"
+                bgWarningColor: school.bgWarningColor || "#fef3c7",
+                imageUrl: school.imageUrl
             });
         }
     }, [school, form]);
 
     const onSubmit = async (values: SchoolUpdateInput) => {
         startTransition(async () => {
+            if (selectedFile) {
+                const uploadedUrl = await uploadImage(selectedFile);
+                values.imageUrl = uploadedUrl;
+            }
             mutation.mutate(values);
         });
+    };
+
+    const uploadImage = async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "album_upload");
+        formData.append("folder", "figurinhas");
+
+        const response = await axios.post(
+            "https://api.cloudinary.com/v1_1/dshyu21tz/image/upload",
+            formData
+        );
+
+        return response.data.secure_url;
     };
 
     const handleGoBack = () => {
@@ -94,6 +117,11 @@ export default function DetailsPage() {
     const handleGoAlbum = (albumId: string) => {
         navigate(`/albums/${albumId}`)
     }
+
+    const handleRemoveCurrentImage = () => {
+        form.setValue("imageUrl", "");
+        setSelectedFile(null);
+    };
 
     const warningValue = form.watch("warning");
     const bgWarningColorValue = form.watch("bgWarningColor");
@@ -256,6 +284,36 @@ export default function DetailsPage() {
                                                 </FormItem>
                                             )}
                                         />
+                                        {/* Seção de upload/preview da imagem */}
+                                        <div className="space-y-4">
+                                            <FormLabel>Capa do Álbum</FormLabel>
+
+                                            {form.watch("imageUrl") && !selectedFile ? (
+                                                // Mostra a imagem atual do álbum
+                                                <div className="flex items-center space-x-3">
+                                                    <img
+                                                        src={form.watch("imageUrl")}
+                                                        alt="Capa atual"
+                                                        className="w-12 h-12 object-cover rounded-lg border"
+                                                    />
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-medium text-gray-700">Imagem atual</p>
+                                                        <button
+                                                            type="button"
+                                                            onClick={handleRemoveCurrentImage}
+                                                            className="text-xs text-red-600 hover:text-red-800 underline cursor-pointer"
+                                                        >
+                                                            Remover
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                // Mostra o uploader quando não há imagem ou foi removida
+                                                <ImageUploader
+                                                    onFileSelect={setSelectedFile}
+                                                />
+                                            )}
+                                        </div>
 
                                         {/* Grid responsivo para Estado e Cidade */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
