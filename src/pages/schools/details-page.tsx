@@ -286,7 +286,7 @@ export default function DetailsPage() {
                                         />
                                         {/* Seção de upload/preview da imagem */}
                                         <div className="space-y-4">
-                                            <FormLabel>Capa do Álbum</FormLabel>
+                                            <FormLabel>Capa da Escola</FormLabel>
 
                                             {form.watch("imageUrl") && !selectedFile ? (
                                                 // Mostra a imagem atual do álbum
