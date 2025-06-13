@@ -156,228 +156,226 @@ export default function DetailsPage() {
                 </Button>
                 <h1 className="text-2xl font-bold">Detalhes do Álbum</h1>
             </div>
-            <div className="flex gap-6">
-                <div className="flex-1">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Save className="w-5 h-5" />
-                                Editar Álbum
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="name"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Nome</FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} placeholder="Nome do álbum" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Save className="w-5 h-5" />
+                            Editar Álbum
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                <FormField
+                                    control={form.control}
+                                    name="name"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Nome</FormLabel>
+                                            <FormControl>
+                                                <Input {...field} placeholder="Nome do álbum" />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
 
-                                    {/* Seção de upload/preview da imagem */}
-                                    <div className="space-y-4">
-                                        <FormLabel>Capa do Álbum</FormLabel>
+                                {/* Seção de upload/preview da imagem */}
+                                <div className="space-y-4">
+                                    <FormLabel>Capa do Álbum</FormLabel>
 
-                                        {form.watch("coverImage") && !selectedFile ? (
-                                            // Mostra a imagem atual do álbum
-                                            <div className="flex items-center space-x-3">
-                                                <img
-                                                    src={form.watch("coverImage")}
-                                                    alt="Capa atual"
-                                                    className="w-12 h-12 object-cover rounded-lg border"
-                                                />
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-medium text-gray-700">Imagem atual</p>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleRemoveCurrentImage}
-                                                        className="text-xs text-red-600 hover:text-red-800 underline cursor-pointer"
-                                                    >
-                                                        Remover
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            // Mostra o uploader quando não há imagem ou foi removida
-                                            <ImageUploader
-                                                onFileSelect={setSelectedFile}
+                                    {form.watch("coverImage") && !selectedFile ? (
+                                        // Mostra a imagem atual do álbum
+                                        <div className="flex items-center space-x-3">
+                                            <img
+                                                src={form.watch("coverImage")}
+                                                alt="Capa atual"
+                                                className="w-12 h-12 object-cover rounded-lg border"
                                             />
-                                        )}
-                                    </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-700">Imagem atual</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRemoveCurrentImage}
+                                                    className="text-xs text-red-600 hover:text-red-800 underline cursor-pointer"
+                                                >
+                                                    Remover
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        // Mostra o uploader quando não há imagem ou foi removida
+                                        <ImageUploader
+                                            onFileSelect={setSelectedFile}
+                                        />
+                                    )}
+                                </div>
 
+                                <FormField
+                                    control={form.control}
+                                    name="totalStickers"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Total de figurinhas</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="number"
+                                                    {...field}
+                                                    placeholder="Quantidade total de figurinhas"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium">Características</h3>
                                     <FormField
                                         control={form.control}
-                                        name="totalStickers"
+                                        name="hasCommon"
                                         render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Total de figurinhas</FormLabel>
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                                                 <FormControl>
-                                                    <Input
-                                                        type="number"
-                                                        {...field}
-                                                        placeholder="Quantidade total de figurinhas"
+                                                    <Checkbox
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
                                                     />
                                                 </FormControl>
-                                                <FormMessage />
+                                                <div className="space-y-1 leading-none">
+                                                    <FormLabel className="text-sm font-medium">
+                                                        Figurinhas Comuns
+                                                    </FormLabel>
+                                                    <p className="text-sm text-muted-foreground mb-3">
+                                                        Álbum contém figurinhas comuns
+                                                    </p>
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="commonPrice"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Preço</FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        type="number"
+                                                                        {...field}
+                                                                        placeholder="Preço da figurinha comum"
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
                                             </FormItem>
                                         )}
                                     />
+                                    <FormField
+                                        control={form.control}
+                                        name="hasLegend"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                                <div className="space-y-1 leading-none">
+                                                    <FormLabel className="text-sm font-medium">
+                                                        Figurinhas Legend
+                                                    </FormLabel>
+                                                    <p className="text-sm text-muted-foreground mb-3">
+                                                        Álbum contém figurinhas legends
+                                                    </p>
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="legendPrice"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Preço</FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        type="number"
+                                                                        {...field}
+                                                                        placeholder="Preço da figurinha legend"
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="hasA4"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                                <div className="space-y-1 leading-none">
+                                                    <FormLabel className="text-sm font-medium">
+                                                        Figurinhas A4
+                                                    </FormLabel>
+                                                    <p className="text-sm text-muted-foreground mb-3">
+                                                        Álbum contém figurinhas em formato A4
+                                                    </p>
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="a4Price"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Preço</FormLabel>
+                                                                <FormControl>
+                                                                    <Input
+                                                                        type="number"
+                                                                        {...field}
+                                                                        placeholder="Preço da figurinha A4"
+                                                                    />
+                                                                </FormControl>
+                                                                <FormMessage />
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
 
-                                    <div className="space-y-4">
-                                        <h3 className="text-lg font-medium">Características</h3>
-                                        <FormField
-                                            control={form.control}
-                                            name="hasCommon"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                                    <FormControl>
-                                                        <Checkbox
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                        />
-                                                    </FormControl>
-                                                    <div className="space-y-1 leading-none">
-                                                        <FormLabel className="text-sm font-medium">
-                                                            Figurinhas Comuns
-                                                        </FormLabel>
-                                                        <p className="text-sm text-muted-foreground mb-3">
-                                                            Álbum contém figurinhas comuns
-                                                        </p>
-                                                        <FormField
-                                                            control={form.control}
-                                                            name="commonPrice"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>Preço</FormLabel>
-                                                                    <FormControl>
-                                                                        <Input
-                                                                            type="number"
-                                                                            {...field}
-                                                                            placeholder="Preço da figurinha comum"
-                                                                        />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    </div>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="hasLegend"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                                    <FormControl>
-                                                        <Checkbox
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                        />
-                                                    </FormControl>
-                                                    <div className="space-y-1 leading-none">
-                                                        <FormLabel className="text-sm font-medium">
-                                                            Figurinhas Legend
-                                                        </FormLabel>
-                                                        <p className="text-sm text-muted-foreground mb-3">
-                                                            Álbum contém figurinhas legends
-                                                        </p>
-                                                        <FormField
-                                                            control={form.control}
-                                                            name="legendPrice"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>Preço</FormLabel>
-                                                                    <FormControl>
-                                                                        <Input
-                                                                            type="number"
-                                                                            {...field}
-                                                                            placeholder="Preço da figurinha legend"
-                                                                        />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    </div>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="hasA4"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                                                    <FormControl>
-                                                        <Checkbox
-                                                            checked={field.value}
-                                                            onCheckedChange={field.onChange}
-                                                        />
-                                                    </FormControl>
-                                                    <div className="space-y-1 leading-none">
-                                                        <FormLabel className="text-sm font-medium">
-                                                            Figurinhas A4
-                                                        </FormLabel>
-                                                        <p className="text-sm text-muted-foreground mb-3">
-                                                            Álbum contém figurinhas em formato A4
-                                                        </p>
-                                                        <FormField
-                                                            control={form.control}
-                                                            name="a4Price"
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>Preço</FormLabel>
-                                                                    <FormControl>
-                                                                        <Input
-                                                                            type="number"
-                                                                            {...field}
-                                                                            placeholder="Preço da figurinha A4"
-                                                                        />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                    </div>
-                                                </FormItem>
-                                            )}
-                                        />
-                                    </div>
+                                <div className="flex gap-3 pt-4">
+                                    <Button
+                                        type="submit"
+                                        disabled={isPending || mutation.isPending}
+                                        className="flex items-center gap-2"
+                                    >
+                                        <Save className="w-4 h-4" />
+                                        {isPending || mutation.isPending ? "Salvando..." : "Salvar alterações"}
+                                    </Button>
 
-                                    <div className="flex gap-3 pt-4">
-                                        <Button
-                                            type="submit"
-                                            disabled={isPending || mutation.isPending}
-                                            className="flex items-center gap-2"
-                                        >
-                                            <Save className="w-4 h-4" />
-                                            {isPending || mutation.isPending ? "Salvando..." : "Salvar alterações"}
-                                        </Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleGoBack}
+                                        disabled={isPending || mutation.isPending}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                </div>
+                            </form>
+                        </Form>
+                    </CardContent>
+                </Card>
 
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            onClick={handleGoBack}
-                                            disabled={isPending || mutation.isPending}
-                                        >
-                                            Cancelar
-                                        </Button>
-                                    </div>
-                                </form>
-                            </Form>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <div className="w-96">
+                <div>
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">

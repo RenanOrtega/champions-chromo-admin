@@ -147,7 +147,7 @@ export default function DetailsPage() {
     }
 
     return (
-        <div className="container mx-auto p-4 sm:p-6">
+        <div className="container mx-auto">
             <div className="flex items-center gap-4 mb-6">
                 <Button
                     variant="outline"

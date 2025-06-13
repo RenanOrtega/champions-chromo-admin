@@ -234,10 +234,10 @@ async function downloadOrderSpreadsheet(order: OrderSummary, orderSummaryId: str
         // Buscar dados das escolas e álbuns
         for (const school of order.schools) {
             const schoolData = await getSchoolById(school.schoolId);
-            
+
             for (const album of school.albums) {
                 const albumData = await getAlbumById(album.albumId);
-                
+
                 for (const sticker of album.stickers) {
                     stickersData.push([
                         schoolData?.name || 'N/A',
@@ -275,7 +275,7 @@ async function downloadOrderSpreadsheet(order: OrderSummary, orderSummaryId: str
         // Gerar arquivo Excel e fazer download
         const fileName = `pedido_${orderSummaryId}_${new Date().toISOString().split('T')[0]}.xlsx`;
         XLSX.writeFile(wb, fileName);
-        
+
     } catch (error) {
         console.error('Erro ao gerar planilha:', error);
         alert('Erro ao gerar a planilha. Tente novamente.');
@@ -333,74 +333,72 @@ export default function DetailsPage() {
     }
 
     return (
-        <div className="min-h-screen">
-            <div className="container mx-auto p-6 max-w-6xl">
-                <div className="mb-8">
-                    <div className="flex flex-col md:flex-row gap-3 items-center justify-between mb-6">
-                        <div className="flex items-center gap-4">
-                            <div className="bg-blue-100 dark:bg-blue-600 p-3 rounded-xl">
-                                <Package className="h-7 w-7 text-blue-600 dark:text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-md md:text-2xl font-bold mb-1">
-                                    Pedido #{orderSummaryId}
-                                </h1>
-                                <p className="text-gray-600">Visualize todos os detalhes do seu pedido</p>
-                            </div>
+        <div className="container mx-auto max-w-6xl">
+            <div className="mb-8">
+                <div className="flex flex-col md:flex-row gap-3 items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                        <div className="bg-blue-100 dark:bg-blue-600 p-3 rounded-xl">
+                            <Package className="h-7 w-7 text-blue-600 dark:text-white" />
                         </div>
-                        
-                        {order && (
-                            <Button 
-                                onClick={handleDownloadSpreadsheet}
-                                className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                            >
-                                <Download className="h-4 w-4 mr-2" />
-                                Baixar Planilha
-                            </Button>
-                        )}
+                        <div>
+                            <h1 className="text-md md:text-2xl font-bold mb-1">
+                                Pedido #{orderSummaryId}
+                            </h1>
+                            <p className="text-gray-600">Visualize todos os detalhes do seu pedido</p>
+                        </div>
                     </div>
+
+                    {order && (
+                        <Button
+                            onClick={handleDownloadSpreadsheet}
+                            className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Baixar Planilha
+                        </Button>
+                    )}
                 </div>
-
-                {order ? (
-                    <>
-                        <OrderSummaryStats order={order} />
-                        <div className="space-y-2">
-                            {order.schools.map((school, schoolIndex) => (
-                                <Card key={schoolIndex} className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
-                                    <CardContent className="rounded-xl">
-                                        <div className="space-y-6">
-                                            <SchoolDetails schoolId={school.schoolId} />
-
-                                            {school.albums.length > 0 && (
-                                                <div className="space-y-4">
-                                                    <div className="flex items-center gap-2 mb-4">
-                                                        <h3 className="text-lg font-semibold">
-                                                            Álbuns ({school.albums.length})
-                                                        </h3>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        {school.albums.map((album, albumIndex) => (
-                                                            <AlbumDetails key={albumIndex} albumId={album.albumId} stickers={album.stickers} />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    </>
-                ) : (
-                    <Card className="border-0 shadow-sm text-center py-16 bg-white rounded-xl">
-                        <CardContent>
-                            <div className="text-gray-300 text-6xl mb-6">📋</div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhum pedido encontrado</h3>
-                            <p className="text-gray-600">Você ainda não possui pedidos registrados.</p>
-                        </CardContent>
-                    </Card>
-                )}
             </div>
+
+            {order ? (
+                <>
+                    <OrderSummaryStats order={order} />
+                    <div className="space-y-2">
+                        {order.schools.map((school, schoolIndex) => (
+                            <Card key={schoolIndex} className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+                                <CardContent className="rounded-xl">
+                                    <div className="space-y-6">
+                                        <SchoolDetails schoolId={school.schoolId} />
+
+                                        {school.albums.length > 0 && (
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <h3 className="text-lg font-semibold">
+                                                        Álbuns ({school.albums.length})
+                                                    </h3>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {school.albums.map((album, albumIndex) => (
+                                                        <AlbumDetails key={albumIndex} albumId={album.albumId} stickers={album.stickers} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </>
+            ) : (
+                <Card className="border-0 shadow-sm text-center py-16 bg-white rounded-xl">
+                    <CardContent>
+                        <div className="text-gray-300 text-6xl mb-6">📋</div>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhum pedido encontrado</h3>
+                        <p className="text-gray-600">Você ainda não possui pedidos registrados.</p>
+                    </CardContent>
+                </Card>
+            )}
         </div>
     );
 }
