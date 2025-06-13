@@ -14,6 +14,22 @@ export const columns: ColumnDef<OrderSummary>[] = [
                 {row.original.id}
             </div>
         )
+    }, 
+    {
+        accessorKey: "order",
+        header: () => {
+            return (
+                <div className="flex justify-center">
+                    Nome do Cliente
+                </div>
+            )
+        },
+        size: 100,
+        cell: ({ row }) => (
+            <div className="font-mono text-sm flex justify-center">
+                {row.original.customer.name == "" ? "N/A" : row.original.customer.name}
+            </div>
+        )
     },
     {
         accessorKey: "totalAlbums",

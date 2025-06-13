@@ -1,9 +1,26 @@
 export type OrderSummary = {
     id: string
     schools: SchoolsOrder[]
+    customer: Customer
     totalAlbums: number
     totalStickers: number
     priceTotal: number
+}
+
+export type Customer = {
+    name: string
+    email: string
+    address: CustomerAddress
+}
+
+export type CustomerAddress = {
+    street: string
+    number: string
+    neighborhood: string
+    postalCode: string
+    city: string
+    state: string
+    complement: string
 }
 
 export type SchoolsOrder = {

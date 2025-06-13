@@ -3,13 +3,14 @@
 import { getAlbumById } from "@/services/album";
 import { getOrderSummaryById } from "@/services/order";
 import { getSchoolById } from "@/services/school";
-import { type StickersOrder } from "@/types/order";
+import { type OrderSummary, type StickersOrder } from "@/types/order";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
     GraduationCap,
     MapPin,
@@ -17,9 +18,12 @@ import {
     Image,
     DollarSign,
     Package,
-    AlertCircle
+    AlertCircle,
+    User,
+    Download
 } from "lucide-react";
 import { BadgeStickerType } from "@/components/badge-sticker-type";
+import * as XLSX from 'xlsx';
 
 function SchoolDetails({ schoolId }: { schoolId: string }) {
     const { data: school, isLoading, error } = useQuery({
@@ -111,7 +115,7 @@ function AlbumDetails({ albumId, stickers }: { albumId: string, stickers: Sticke
     );
 }
 
-function OrderSummaryStats({ order }: { order: any }) {
+function OrderSummaryStats({ order }: { order: OrderSummary }) {
     const stats = [
         {
             label: "Álbuns",
@@ -150,6 +154,40 @@ function OrderSummaryStats({ order }: { order: any }) {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {order.customer.name && (
+                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 col-span-full">
+                    <CardContent className={`p-6 rounded-xl`}>
+                        <div className="flex items-center gap-4">
+                            <div className={`bg-blue-100 dark:bg-blue-600 p-3 rounded-xl`}>
+                                <User className={`h-6 w-6 text-blue-600 dark:text-white`} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-600 mb-1">Cliente</p>
+                                <p className={`text-lg font-semibold`}>{order.customer.name}</p>
+                                <p className={`text-sm text-gray-600`}>{order.customer.email}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+            {order.customer.name && (
+                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 col-span-full">
+                    <CardContent className={`p-6 rounded-xl`}>
+                        <div className="flex items-center gap-4">
+                            <div className={`bg-yellow-100 dark:bg-yellow-600 p-3 rounded-xl`}>
+                                <MapPin className={`h-6 w-6 text-yellow-600 dark:text-white`} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-600 mb-1">Endereço</p>
+                                <p className={`text-sm `}><span className="text-yellow-700 font-bold">Rua: </span>{order.customer.address.street}, {order.customer.address.number}</p>
+                                {order.customer.address.complement && (<p className={`text-sm`}><span className="text-yellow-700 font-bold ">Complemento: </span>{order.customer.address.complement}</p>)}
+                                <p className="text-sm">{order.customer.address.state} - {order.customer.address.city}</p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
             {stats.map((stat, index) => (
                 <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
                     <CardContent className={`p-6 rounded-xl`}>
@@ -165,8 +203,83 @@ function OrderSummaryStats({ order }: { order: any }) {
                     </CardContent>
                 </Card>
             ))}
+
         </div>
     );
+}
+
+// Função para baixar a planilha
+async function downloadOrderSpreadsheet(order: OrderSummary, orderSummaryId: string) {
+    try {
+        // Aba 1: Resumo do Pedido
+        const summaryData = [
+            ['ID do Pedido', orderSummaryId],
+            ['Nome do Cliente', order.customer.name || ''],
+            ['Email do Cliente', order.customer.email || ''],
+            ['Rua', order.customer.address.street || ''],
+            ['Número', order.customer.address.number || ''],
+            ['Complemento', order.customer.address.complement || ''],
+            ['Cidade', order.customer.address.city || ''],
+            ['Estado', order.customer.address.state || ''],
+            ['Total de Álbuns', order.totalAlbums],
+            ['Total de Figurinhas', order.totalStickers],
+            ['Valor Total', `R$ ${order.priceTotal.toFixed(2)}`]
+        ];
+
+        // Aba 2: Detalhes das Figurinhas
+        const stickersData = [
+            ['Escola', 'Álbum', 'Número da Figurinha', 'Tipo', 'Quantidade']
+        ];
+
+        // Buscar dados das escolas e álbuns
+        for (const school of order.schools) {
+            const schoolData = await getSchoolById(school.schoolId);
+            
+            for (const album of school.albums) {
+                const albumData = await getAlbumById(album.albumId);
+                
+                for (const sticker of album.stickers) {
+                    stickersData.push([
+                        schoolData?.name || 'N/A',
+                        albumData?.name || 'N/A',
+                        sticker.number.toString(),
+                        sticker.type,
+                        sticker.quantity.toString()
+                    ]);
+                }
+            }
+        }
+
+        // Criar workbook
+        const wb = XLSX.utils.book_new();
+
+        // Criar worksheet do resumo
+        const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+        XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo do Pedido');
+
+        // Criar worksheet das figurinhas
+        const wsStickers = XLSX.utils.aoa_to_sheet(stickersData);
+        XLSX.utils.book_append_sheet(wb, wsStickers, 'Figurinhas');
+
+        // Ajustar largura das colunas
+        const maxWidth = 20;
+        wsSummary['!cols'] = [{ wch: maxWidth }, { wch: maxWidth }];
+        wsStickers['!cols'] = [
+            { wch: 25 }, // Escola
+            { wch: 25 }, // Álbum
+            { wch: 15 }, // Número
+            { wch: 15 }, // Tipo
+            { wch: 10 }  // Quantidade
+        ];
+
+        // Gerar arquivo Excel e fazer download
+        const fileName = `pedido_${orderSummaryId}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        
+    } catch (error) {
+        console.error('Erro ao gerar planilha:', error);
+        alert('Erro ao gerar a planilha. Tente novamente.');
+    }
 }
 
 export default function DetailsPage() {
@@ -176,6 +289,12 @@ export default function DetailsPage() {
         queryKey: ['orderSummary', orderSummaryId],
         queryFn: () => getOrderSummaryById(orderSummaryId!),
     });
+
+    const handleDownloadSpreadsheet = () => {
+        if (order && orderSummaryId) {
+            downloadOrderSpreadsheet(order, orderSummaryId);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -217,16 +336,28 @@ export default function DetailsPage() {
         <div className="min-h-screen">
             <div className="container mx-auto p-6 max-w-6xl">
                 <div className="mb-8">
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className="bg-blue-100 dark:bg-blue-600 p-3 rounded-xl">
-                            <Package className="h-7 w-7 text-blue-600 dark:text-white" />
+                    <div className="flex flex-col md:flex-row gap-3 items-center justify-between mb-6">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-blue-100 dark:bg-blue-600 p-3 rounded-xl">
+                                <Package className="h-7 w-7 text-blue-600 dark:text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-md md:text-2xl font-bold mb-1">
+                                    Pedido #{orderSummaryId}
+                                </h1>
+                                <p className="text-gray-600">Visualize todos os detalhes do seu pedido</p>
+                            </div>
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-bold mb-1">
-                                Pedido #{orderSummaryId}
-                            </h1>
-                            <p className="text-gray-600">Visualize todos os detalhes do seu pedido</p>
-                        </div>
+                        
+                        {order && (
+                            <Button 
+                                onClick={handleDownloadSpreadsheet}
+                                className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                            >
+                                <Download className="h-4 w-4 mr-2" />
+                                Baixar Planilha
+                            </Button>
+                        )}
                     </div>
                 </div>
 
