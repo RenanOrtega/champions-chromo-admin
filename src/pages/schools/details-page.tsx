@@ -18,6 +18,7 @@ import { schoolUpdateForm, type SchoolUpdateInput } from "@/types/school";
 import { getAlbumsBySchoolId } from "@/services/album";
 import axios from "axios";
 import { ImageUploader } from "@/components/image-uploader";
+import PriceInput from "@/components/price-input";
 
 // Cores pré-definidas para o fundo do aviso
 const warningColors = [
@@ -69,7 +70,8 @@ export default function DetailsPage() {
             state: "",
             warning: "",
             imageUrl: "",
-            bgWarningColor: "#fef3c7"
+            bgWarningColor: "#fef3c7",
+            shippingCost: 0
         },
     });
 
@@ -81,7 +83,8 @@ export default function DetailsPage() {
                 state: school.state,
                 warning: school.warning || "",
                 bgWarningColor: school.bgWarningColor || "#fef3c7",
-                imageUrl: school.imageUrl
+                imageUrl: school.imageUrl,
+                shippingCost: school.shippingCost
             });
         }
     }, [school, form]);
@@ -350,10 +353,9 @@ export default function DetailsPage() {
                                                     <FormItem>
                                                         <FormLabel>Frete</FormLabel>
                                                         <FormControl>
-                                                            <Input
-                                                                type="number"
-                                                                {...field}
-                                                                placeholder="Frete"
+                                                            <PriceInput
+                                                                value={field.value}
+                                                                onChange={field.onChange}
                                                             />
                                                         </FormControl>
                                                         <FormMessage />

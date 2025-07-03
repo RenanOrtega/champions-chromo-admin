@@ -18,6 +18,7 @@ import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { ImageUploader } from "@/components/image-uploader";
 import axios from "axios";
+import PriceInput from "@/components/price-input";
 
 export default function DetailsPage() {
     const { albumId } = useParams<{ albumId: string }>();
@@ -257,10 +258,9 @@ export default function DetailsPage() {
                                                             <FormItem>
                                                                 <FormLabel>Preço</FormLabel>
                                                                 <FormControl>
-                                                                    <Input
-                                                                        type="number"
-                                                                        {...field}
-                                                                        placeholder="Preço da figurinha comum"
+                                                                    <PriceInput
+                                                                        value={field.value}
+                                                                        onChange={field.onChange}
                                                                     />
                                                                 </FormControl>
                                                                 <FormMessage />
@@ -296,10 +296,9 @@ export default function DetailsPage() {
                                                             <FormItem>
                                                                 <FormLabel>Preço</FormLabel>
                                                                 <FormControl>
-                                                                    <Input
-                                                                        type="number"
-                                                                        {...field}
-                                                                        placeholder="Preço da figurinha legend"
+                                                                    <PriceInput
+                                                                        value={field.value}
+                                                                        onChange={field.onChange}
                                                                     />
                                                                 </FormControl>
                                                                 <FormMessage />
@@ -335,10 +334,9 @@ export default function DetailsPage() {
                                                             <FormItem>
                                                                 <FormLabel>Preço</FormLabel>
                                                                 <FormControl>
-                                                                    <Input
-                                                                        type="number"
-                                                                        {...field}
-                                                                        placeholder="Preço da figurinha A4"
+                                                                    <PriceInput
+                                                                        value={field.value}
+                                                                        onChange={field.onChange}
                                                                     />
                                                                 </FormControl>
                                                                 <FormMessage />
