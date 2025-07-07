@@ -14,7 +14,7 @@ export const columns: ColumnDef<OrderSummary>[] = [
                 {row.original.id}
             </div>
         )
-    }, 
+    },
     {
         accessorKey: "order",
         header: () => {
@@ -48,6 +48,30 @@ export const columns: ColumnDef<OrderSummary>[] = [
                 </Badge>
             </div>
         )
+    },
+    {
+        id: "albumName",
+        header: "Álbuns",
+        cell: ({ row }) => {
+            const data = row.original;
+            const albums = data.schools?.flatMap(school => school.albums) || [];
+            return (
+                <div className="flex flex-col gap-1">
+                    {albums.map((album, index) => (
+                        <span key={index} className="text-sm">
+                            {album.albumName}
+                        </span>
+                    ))}
+                </div>
+            );
+        },
+        filterFn: (row, _columnId, filterValue) => {
+            const data = row.original;
+            const albums = data.schools?.flatMap(school => school.albums) || [];
+            return albums.some(album =>
+                album.albumName?.toLowerCase().includes(filterValue.toLowerCase())
+            );
+        },
     },
     {
         accessorKey: "totalStickers",

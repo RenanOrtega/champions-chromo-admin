@@ -5,7 +5,7 @@ import { getOrderSummaryById } from "@/services/order";
 import { getSchoolById } from "@/services/school";
 import { type OrderSummary, type StickersOrder } from "@/types/order";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,7 +20,8 @@ import {
     Package,
     AlertCircle,
     User,
-    Download
+    Download,
+    ArrowLeft
 } from "lucide-react";
 import { BadgeStickerType } from "@/components/badge-sticker-type";
 import * as XLSX from 'xlsx';
@@ -284,6 +285,7 @@ async function downloadOrderSpreadsheet(order: OrderSummary, orderSummaryId: str
 
 export default function DetailsPage() {
     const { orderSummaryId } = useParams<{ orderSummaryId: string }>();
+    const navigate = useNavigate();
 
     const { data: order, isLoading, error } = useQuery({
         queryKey: ['orderSummary', orderSummaryId],
@@ -337,6 +339,14 @@ export default function DetailsPage() {
             <div className="mb-8">
                 <div className="flex flex-col md:flex-row gap-3 items-center justify-between mb-6">
                     <div className="flex items-center gap-4">
+                        <Button
+                            variant="outline"
+                            className="mr-2 flex items-center"
+                            onClick={() => navigate(-1)}
+                        >
+                            <ArrowLeft className="h-4 w-4 mr-1" />
+                            Voltar
+                        </Button>
                         <div className="bg-blue-100 dark:bg-blue-600 p-3 rounded-xl">
                             <Package className="h-7 w-7 text-blue-600 dark:text-white" />
                         </div>

@@ -30,6 +30,7 @@ export type SchoolsOrder = {
 
 export type AlbumOrder = {
     albumId: string
+    albumName: string
     stickers: StickersOrder[]
 }
 

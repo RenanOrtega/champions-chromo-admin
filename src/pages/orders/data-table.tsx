@@ -6,10 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type ColumnFiltersState, type SortingState } from "@tanstack/react-table";
 import { useState } from "react";
 import type { BaseData } from "@/types/table";
+import { Label } from "@/components/ui/label";
 
 interface DataTableProps<TData extends BaseData, TValue> {
     columns: ColumnDef<TData, TValue>[]
-    data: TData[]
+    data: TData[],
 }
 
 export function DataTable<TData extends BaseData, TValue>({
@@ -17,9 +18,7 @@ export function DataTable<TData extends BaseData, TValue>({
     data,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
-        []
-    )
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 
     const table = useReactTable({
         data,
@@ -33,20 +32,44 @@ export function DataTable<TData extends BaseData, TValue>({
         state: {
             sorting,
             columnFilters,
+        },
+        globalFilterFn: (row, columnId, filterValue) => {
+            if (columnId === 'albumName') {
+                const data = row.original as any;
+                const albums = data.schools?.flatMap((school: any) => school.albums) || [];
+                return albums.some((album: any) =>
+                    album.albumName?.toLowerCase().includes(filterValue.toLowerCase())
+                );
+            }
+            return true;
         }
-    })
+    });
 
     return (
-        <div className="">
-            <div className="flex justify-between items-center py-4">
-                <Input
-                    placeholder="Filtrar ID..."
-                    value={(table.getColumn("id")?.getFilterValue() as string) ?? ""}
-                    onChange={(event) =>
-                        table.getColumn("id")?.setFilterValue(event.target.value)
-                    }
-                    className="max-w-sm bg-primary-foreground"
-                />
+        <div>
+            <div className="flex justify-start items-center py-4 gap-4">
+                <div className="flex flex-col gap-2">
+                    <Label>Filtrar por ID</Label>
+                    <Input
+                        placeholder="Filtrar ID..."
+                        value={(table.getColumn("id")?.getFilterValue() as string) ?? ""}
+                        onChange={(event) =>
+                            table.getColumn("id")?.setFilterValue(event.target.value)
+                        }
+                        className="max-w-sm bg-primary-foreground"
+                    />
+                </div>
+                <div className="flex flex-col flex-1 gap-2">
+                    <Label>Filtrar por álbum</Label>
+                    <Input
+                        placeholder="Filtrar por nome do álbum..."
+                        value={(table.getColumn("albumName")?.getFilterValue() as string) ?? ""}
+                        onChange={(event) =>
+                            table.getColumn("albumName")?.setFilterValue(event.target.value)
+                        }
+                        className="max-w-sm bg-primary-foreground"
+                    />
+                </div>
             </div>
             <div className="rounded-md border bg-primary-foreground">
                 <Table>
