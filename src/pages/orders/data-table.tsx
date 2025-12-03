@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { flexRender, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type ColumnFiltersState, type SortingState } from "@tanstack/react-table";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { BaseData } from "@/types/table";
 import { Label } from "@/components/ui/label";
+import { useSearchParams } from "react-router";
 
 interface DataTableProps<TData extends BaseData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -17,8 +18,24 @@ export function DataTable<TData extends BaseData, TValue>({
     columns,
     data,
 }: DataTableProps<TData, TValue>) {
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // Ler valores iniciais da URL
+    const initialPage = Number(searchParams.get("page")) || 0;
+    const initialIdFilter = searchParams.get("filterId") || "";
+    const initialAlbumFilter = searchParams.get("filterAlbum") || "";
+
     const [sorting, setSorting] = useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
+        const filters: ColumnFiltersState = [];
+        if (initialIdFilter) filters.push({ id: "id", value: initialIdFilter });
+        if (initialAlbumFilter) filters.push({ id: "albumName", value: initialAlbumFilter });
+        return filters;
+    });
+    const [pagination, setPagination] = useState({
+        pageIndex: initialPage,
+        pageSize: 10,
+    });
 
     const table = useReactTable({
         data,
@@ -29,9 +46,11 @@ export function DataTable<TData extends BaseData, TValue>({
         getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
+        onPaginationChange: setPagination,
         state: {
             sorting,
             columnFilters,
+            pagination,
         },
         globalFilterFn: (row, columnId, filterValue) => {
             if (columnId === 'albumName') {
@@ -44,6 +63,27 @@ export function DataTable<TData extends BaseData, TValue>({
             return true;
         }
     });
+
+    // Sincronizar estado com URL
+    useEffect(() => {
+        const params = new URLSearchParams();
+
+        if (pagination.pageIndex > 0) {
+            params.set("page", pagination.pageIndex.toString());
+        }
+
+        const idFilter = columnFilters.find(f => f.id === "id");
+        if (idFilter?.value) {
+            params.set("filterId", String(idFilter.value));
+        }
+
+        const albumFilter = columnFilters.find(f => f.id === "albumName");
+        if (albumFilter?.value) {
+            params.set("filterAlbum", String(albumFilter.value));
+        }
+
+        setSearchParams(params, { replace: true });
+    }, [pagination.pageIndex, columnFilters, setSearchParams]);
 
     return (
         <div>
@@ -118,23 +158,45 @@ export function DataTable<TData extends BaseData, TValue>({
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                >
-                    Anterior
-                </Button>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                >
-                    Próxima
-                </Button>
+            <div className="flex items-center justify-between py-4">
+                <div className="text-sm text-muted-foreground">
+                    Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+                    {" "}({table.getFilteredRowModel().rows.length} resultado{table.getFilteredRowModel().rows.length !== 1 ? 's' : ''})
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.setPageIndex(0)}
+                        disabled={!table.getCanPreviousPage()}
+                    >
+                        Primeira
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.previousPage()}
+                        disabled={!table.getCanPreviousPage()}
+                    >
+                        Anterior
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.nextPage()}
+                        disabled={!table.getCanNextPage()}
+                    >
+                        Próxima
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                        disabled={!table.getCanNextPage()}
+                    >
+                        Última
+                    </Button>
+                </div>
             </div>
         </div>
     )
