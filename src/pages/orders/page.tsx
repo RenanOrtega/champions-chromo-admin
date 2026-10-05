@@ -49,7 +49,7 @@ export default function OrderSummaryPage() {
             header: "Valor",
             cell: ({ row }) => (
                 <div>
-                    R$ {row.original.priceTotal}
+                    R$ {row.original.priceTotal.toFixed(2)}
                 </div>
             )
         }
