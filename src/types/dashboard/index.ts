@@ -25,3 +25,9 @@ type StickerTypeDistribution = {
     quantity: number,
     percentage: number
 }
+
+/** Período das métricas: from é inclusivo e to é exclusivo. Sem datas = período todo. */
+export type MetricsPeriod = {
+    from?: Date,
+    to?: Date
+}

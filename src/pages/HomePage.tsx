@@ -2,7 +2,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { getMetrics } from "@/services/dashboard";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { DateRangeFilter } from "@/components/date-range-filter";
+import { DEFAULT_DATE_RANGE, describePeriod, toMetricsPeriod, type DateRangeValue } from "@/lib/date-range";
 import {
     Album,
     School,
@@ -52,14 +55,31 @@ const formatDate = (dateString: string) => {
 export default function HomePage() {
     const { user } = useAuth();
 
-    const { data, isLoading, error } = useQuery({
-        queryKey: ['metrics'],
-        queryFn: getMetrics,
+    const [range, setRange] = useState<DateRangeValue>(DEFAULT_DATE_RANGE);
+    const period = toMetricsPeriod(range);
+    const periodLabel = describePeriod(range);
+
+    const { data, isLoading, isFetching, error } = useQuery({
+        queryKey: ['metrics', period?.from?.toISOString() ?? null, period?.to?.toISOString() ?? null],
+        queryFn: () => getMetrics(period ?? undefined),
+        enabled: period !== null,
+        placeholderData: keepPreviousData,
     });
+
+    const header = (
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col">
+                <span className="text-2xl font-bold">Bom dia, {user?.username}</span>
+                <span className="text-sm text-gray-600">Administrador</span>
+            </div>
+            <DateRangeFilter value={range} onChange={setRange} />
+        </div>
+    );
 
     if (isLoading) {
         return (
-            <div className="container mx-auto py-10">
+            <div className="space-y-6">
+                {header}
                 <div className="flex items-center justify-center h-32">
                     <div className="text-lg">Carregando métricas...</div>
                 </div>
@@ -69,7 +89,8 @@ export default function HomePage() {
 
     if (error) {
         return (
-            <div className="container mx-auto py-10">
+            <div className="space-y-6">
+                {header}
                 <div className="flex items-center justify-center h-32">
                     <div className="text-lg text-red-500">Erro ao carregar métricas</div>
                 </div>
@@ -78,12 +99,8 @@ export default function HomePage() {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col">
-                <span className="text-2xl font-bold">Bom dia, {user?.username}</span>
-                <span className="text-sm text-gray-600">Administrador</span>
-            </div>
+        <div className={`space-y-6 transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
+            {header}
 
             {/* KPI Cards - Primeira linha */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -95,7 +112,7 @@ export default function HomePage() {
                     <CardContent>
                         <div className="text-2xl font-bold">{data?.orderMetrics.totalOrders}</div>
                         <p className="text-xs text-muted-foreground">
-                            Últimos 30 dias
+                            {periodLabel}
                         </p>
                     </CardContent>
                 </Card>
@@ -153,7 +170,7 @@ export default function HomePage() {
                             <Calendar className="h-5 w-5" />
                             Vendas Diárias
                         </CardTitle>
-                        <CardDescription>Pedidos e receita dos últimos dias</CardDescription>
+                        <CardDescription>Pedidos e receita · {periodLabel}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ResponsiveContainer width="100%" height={300}>
