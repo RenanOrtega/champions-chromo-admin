@@ -5,6 +5,42 @@ export type OrderSummary = {
     totalAlbums: number
     totalStickers: number
     priceTotal: number
+    subtotal?: number
+    discount?: number
+    couponCode?: string | null
+    status: OrderStatus
+    statusHistory: OrderStatusChange[]
+    paymentStatus: PaymentStatus
+    paymentProviderOrderId?: string | null
+    paymentExpiresAt?: string | null
+    paidAt?: string | null
+    createdAt: string
+}
+
+export type OrderStatus =
+    | 'new'
+    | 'awaitingPayment'
+    | 'paid'
+    | 'inPreparation'
+    | 'shipped'
+    | 'delivered'
+    | 'expired'
+    | 'cancelled'
+    | 'refunded'
+
+export type PaymentStatus =
+    | 'notStarted'
+    | 'awaitingPayment'
+    | 'paid'
+    | 'expired'
+    | 'cancelled'
+    | 'refunded'
+
+export type OrderStatusChange = {
+    status: OrderStatus
+    at: string
+    by: string
+    note?: string | null
 }
 
 export type Customer = {

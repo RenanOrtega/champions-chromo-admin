@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { BadgeStickerType } from "@/components/badge-sticker-type";
 import * as XLSX from 'xlsx';
+import { OrderStatusCard } from "./order-status-card";
+import { orderStatusInfo } from "@/lib/order-status";
 
 function SchoolDetails({ schoolId }: { schoolId: string }) {
     const { data: school, isLoading, error } = useQuery({
@@ -215,6 +217,7 @@ async function downloadOrderSpreadsheet(order: OrderSummary, orderSummaryId: str
         // Aba 1: Resumo do Pedido
         const summaryData = [
             ['ID do Pedido', orderSummaryId],
+            ['Status', orderStatusInfo(order.status).label],
             ['Nome do Cliente', order.customer.name || ''],
             ['Email do Cliente', order.customer.email || ''],
             ['Rua', order.customer.address.street || ''],
@@ -372,6 +375,7 @@ export default function DetailsPage() {
 
             {order ? (
                 <>
+                    <OrderStatusCard key={`${order.id}-${order.status}`} order={order} />
                     <OrderSummaryStats order={order} />
                     <div className="space-y-2">
                         {order.schools.map((school, schoolIndex) => (

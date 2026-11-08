@@ -3,6 +3,8 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import type { OrderSummary } from "@/types/order"
 import { Badge } from "@/components/ui/badge"
+import { OrderStatusBadge } from "@/components/order-status-badge"
+import { formatDateTime } from "@/lib/order-status"
 
 export const columns: ColumnDef<OrderSummary>[] = [
     {
@@ -13,6 +15,22 @@ export const columns: ColumnDef<OrderSummary>[] = [
             <div className="font-mono text-sm">
                 {row.original.id}
             </div>
+        )
+    },
+    {
+        accessorKey: "status",
+        header: "Status",
+        size: 120,
+        cell: ({ row }) => <OrderStatusBadge status={row.original.status} />,
+        filterFn: (row, _columnId, filterValue) =>
+            !filterValue || (row.original.status ?? "new") === filterValue,
+    },
+    {
+        accessorKey: "createdAt",
+        header: "Criado em",
+        size: 110,
+        cell: ({ row }) => (
+            <div className="text-sm whitespace-nowrap">{formatDateTime(row.original.createdAt)}</div>
         )
     },
     {

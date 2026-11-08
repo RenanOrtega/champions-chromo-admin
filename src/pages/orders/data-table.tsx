@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import type { BaseData } from "@/types/table";
 import { Label } from "@/components/ui/label";
 import { useSearchParams } from "react-router";
+import { ORDER_STATUSES } from "@/lib/order-status";
 
 interface DataTableProps<TData extends BaseData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -24,12 +25,14 @@ export function DataTable<TData extends BaseData, TValue>({
     const initialPage = Number(searchParams.get("page")) || 0;
     const initialIdFilter = searchParams.get("filterId") || "";
     const initialAlbumFilter = searchParams.get("filterAlbum") || "";
+    const initialStatusFilter = searchParams.get("filterStatus") || "";
 
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
         const filters: ColumnFiltersState = [];
         if (initialIdFilter) filters.push({ id: "id", value: initialIdFilter });
         if (initialAlbumFilter) filters.push({ id: "albumName", value: initialAlbumFilter });
+        if (initialStatusFilter) filters.push({ id: "status", value: initialStatusFilter });
         return filters;
     });
     const [pagination, setPagination] = useState({
@@ -82,12 +85,17 @@ export function DataTable<TData extends BaseData, TValue>({
             params.set("filterAlbum", String(albumFilter.value));
         }
 
+        const statusFilter = columnFilters.find(f => f.id === "status");
+        if (statusFilter?.value) {
+            params.set("filterStatus", String(statusFilter.value));
+        }
+
         setSearchParams(params, { replace: true });
     }, [pagination.pageIndex, columnFilters, setSearchParams]);
 
     return (
         <div>
-            <div className="flex justify-start items-center py-4 gap-4">
+            <div className="flex flex-wrap justify-start items-end py-4 gap-4">
                 <div className="flex flex-col gap-2">
                     <Label>Filtrar por ID</Label>
                     <Input
@@ -98,6 +106,22 @@ export function DataTable<TData extends BaseData, TValue>({
                         }
                         className="max-w-sm bg-primary-foreground"
                     />
+                </div>
+                <div className="flex flex-col gap-2">
+                    <Label htmlFor="filter-status">Status</Label>
+                    <select
+                        id="filter-status"
+                        value={(table.getColumn("status")?.getFilterValue() as string) ?? ""}
+                        onChange={(event) =>
+                            table.getColumn("status")?.setFilterValue(event.target.value || undefined)
+                        }
+                        className="h-9 rounded-md border border-input bg-primary-foreground px-3 text-sm"
+                    >
+                        <option value="">Todos</option>
+                        {ORDER_STATUSES.map(status => (
+                            <option key={status.value} value={status.value}>{status.label}</option>
+                        ))}
+                    </select>
                 </div>
                 <div className="flex flex-col flex-1 gap-2">
                     <Label>Filtrar por álbum</Label>
