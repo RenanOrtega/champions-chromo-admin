@@ -3,13 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ORDER_STATUSES, PAYMENT_STATUS_LABELS, formatDateTime, orderStatusInfo } from "@/lib/order-status";
-import { updateOrderStatus } from "@/services/order";
+import { useUpdateOrderStatus } from "@/hooks/use-update-order-status";
+import { NEXT_STEP, ORDER_STATUSES, PAYMENT_STATUS_LABELS, formatDateTime } from "@/lib/order-status";
 import type { OrderStatus, OrderSummary } from "@/types/order";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ClipboardList, History } from "lucide-react";
+import { ArrowRight, ClipboardList, History } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 const BY_LABELS: Record<string, string> = {
     system: "Sistema",
@@ -17,21 +15,12 @@ const BY_LABELS: Record<string, string> = {
 };
 
 export function OrderStatusCard({ order }: { order: OrderSummary }) {
-    const queryClient = useQueryClient();
     const currentStatus: OrderStatus = order.status ?? "new";
     const [status, setStatus] = useState<OrderStatus>(currentStatus);
     const [note, setNote] = useState("");
 
-    const mutation = useMutation({
-        mutationFn: () => updateOrderStatus(order.id, status, note),
-        onSuccess: () => {
-            toast.success(`Status alterado para "${orderStatusInfo(status).label}"`);
-            setNote("");
-            queryClient.invalidateQueries({ queryKey: ["orderSummary", order.id] });
-            queryClient.invalidateQueries({ queryKey: ["ordersSummary"] });
-        },
-        onError: () => toast.error("Erro ao alterar o status do pedido"),
-    });
+    const mutation = useUpdateOrderStatus();
+    const next = NEXT_STEP[currentStatus];
 
     const history = [...(order.statusHistory ?? [])].reverse();
 
@@ -43,7 +32,18 @@ export function OrderStatusCard({ order }: { order: OrderSummary }) {
                         <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
                             <ClipboardList className="h-4 w-4" /> Status do pedido
                         </div>
-                        <OrderStatusBadge status={currentStatus} />
+                        <OrderStatusBadge status={currentStatus} className="text-sm" />
+                        {next && (
+                            <div className="pt-2">
+                                <Button
+                                    disabled={mutation.isPending}
+                                    onClick={() => mutation.mutate({ id: order.id, status: next.to })}
+                                    className="cursor-pointer"
+                                >
+                                    {next.label} <ArrowRight className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
                         <div className="text-sm text-gray-600 space-y-1 pt-1">
                             <p>Criado em: {formatDateTime(order.createdAt)}</p>
                             <p>Pagamento: {PAYMENT_STATUS_LABELS[order.paymentStatus ?? "notStarted"]}</p>
@@ -56,10 +56,13 @@ export function OrderStatusCard({ order }: { order: OrderSummary }) {
 
                     <form
                         className="flex flex-col gap-3 w-full md:max-w-sm"
-                        onSubmit={(e) => { e.preventDefault(); mutation.mutate(); }}
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            mutation.mutate({ id: order.id, status, note }, { onSuccess: () => setNote("") });
+                        }}
                     >
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="order-status">Alterar status</Label>
+                            <Label htmlFor="order-status">Outro status</Label>
                             <select
                                 id="order-status"
                                 value={status}
