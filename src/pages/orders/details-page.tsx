@@ -1,211 +1,218 @@
-"use client"
-
 import { getAlbumById } from "@/services/album";
 import { getOrderSummaryById } from "@/services/order";
 import { getSchoolById } from "@/services/school";
-import { type OrderSummary, type StickersOrder } from "@/types/order";
+import { type AlbumOrder, type OrderSummary, type SchoolsOrder, type StickersOrder } from "@/types/order";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
-    GraduationCap,
-    MapPin,
-    BookOpen,
-    Image,
-    DollarSign,
-    Package,
     AlertCircle,
-    User,
+    ArrowLeft,
+    BookOpen,
+    Check,
+    Copy,
     Download,
-    ArrowLeft
+    GraduationCap,
+    Mail,
+    MapPin,
 } from "lucide-react";
-import { BadgeStickerType } from "@/components/badge-sticker-type";
+import { getTypeBadgeColor } from "@/components/badge-sticker-type";
 import * as XLSX from 'xlsx';
+import { OrderStatusCard } from "./order-status-card";
+import { SectionCard } from "./section-card";
+import { OrderStatusBadge } from "@/components/order-status-badge";
+import { PAYMENT_STATUS_LABELS, formatDateTime, formatPrice, orderStatusInfo } from "@/lib/order-status";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
-function SchoolDetails({ schoolId }: { schoolId: string }) {
-    const { data: school, isLoading, error } = useQuery({
-        queryKey: ['school', schoolId],
-        queryFn: () => getSchoolById(schoolId),
-        enabled: !!schoolId,
+const STICKER_TYPE_LABELS: Record<StickersOrder["type"], string> = {
+    a4: "A4",
+    common: "Comum",
+    legend: "Legend",
+};
+
+const sumQuantity = (stickers: StickersOrder[]) => stickers.reduce((total, s) => total + s.quantity, 0);
+
+function StickerChip({ sticker }: { sticker: StickersOrder }) {
+    return (
+        <span
+            title={`Figurinha ${sticker.number} · ${STICKER_TYPE_LABELS[sticker.type]} · ${sticker.quantity} un.`}
+            className="inline-flex items-center overflow-hidden rounded-md border text-xs"
+        >
+            <span className="px-2 py-1 font-mono font-medium">#{sticker.number}</span>
+            {sticker.type !== "common" && (
+                <span className={cn("px-1.5 py-1 font-medium", getTypeBadgeColor(sticker.type))}>
+                    {STICKER_TYPE_LABELS[sticker.type]}
+                </span>
+            )}
+            {sticker.quantity > 1 && (
+                <span className="bg-muted px-1.5 py-1 font-semibold">×{sticker.quantity}</span>
+            )}
+        </span>
+    );
+}
+
+function AlbumItems({ album }: { album: AlbumOrder }) {
+    const { data, isLoading } = useQuery({
+        queryKey: ['album', album.albumId],
+        queryFn: () => getAlbumById(album.albumId),
+        enabled: !!album.albumId,
     });
 
-    if (isLoading) return <Skeleton className="h-16 w-full rounded-xl" />;
-    if (error) return (
-        <Alert variant="destructive" className="rounded-xl border-0 bg-red-50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Erro ao carregar escola</AlertDescription>
-        </Alert>
-    );
+    const name = data?.name ?? album.albumName;
+    const units = sumQuantity(album.stickers);
+    const sorted = [...album.stickers].sort((a, b) =>
+        a.number.localeCompare(b.number, undefined, { numeric: true }));
 
     return (
-        <div className="rounded-xl p-4 border border-blue-100 dark:border-blue-600">
-            <div className="flex items-center gap-3">
-                <div className="bg-blue-100 p-2.5 rounded-lg dark:bg-blue-700">
-                    <GraduationCap className="h-5 w-5 text-blue-600 dark:text-white" />
+        <div className="space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                    <BookOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    {isLoading && !name
+                        ? <Skeleton className="h-4 w-40" />
+                        : <h4 className="truncate font-medium">{name || "Álbum"}</h4>}
                 </div>
-                <div className="flex-1">
-                    <h4 className="font-semibold">{school?.name}</h4>
-                    <div className="flex items-center gap-1.5 text-sm mt-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        <span>{school?.city} - {school?.state}</span>
-                    </div>
-                </div>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                    {album.stickers.length} {album.stickers.length === 1 ? "figurinha" : "figurinhas"}
+                    {units !== album.stickers.length && ` · ${units} un.`}
+                </span>
             </div>
-        </div>
-    );
-}
-
-function StickersList({ stickers }: { stickers: StickersOrder[] }) {
-    return (
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 space-y-2 w-full">
-            {stickers.map((sticker, index) => (
-                <div key={index} className="flex items-center justify-between bg-white dark:bg-gray-300 rounded-lg p-2.5 shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-3">
-                        <span className="font-mono text-sm font-medium text-gray-700">#{sticker.number}</span>
-                        <BadgeStickerType type={sticker.type} />
-                    </div>
-                    <div>
-                        <span className="dark:text-blue-700">Qtd: </span>
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
-                            {sticker.quantity}x
-                        </Badge>
-                    </div>
+            {sorted.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                    {sorted.map((sticker, index) => <StickerChip key={index} sticker={sticker} />)}
                 </div>
-            ))}
+            )}
         </div>
     );
 }
 
-function AlbumDetails({ albumId, stickers }: { albumId: string, stickers: StickersOrder[] }) {
-    const { data: album, isLoading, error } = useQuery({
-        queryKey: ['album', albumId],
-        queryFn: () => getAlbumById(albumId),
-        enabled: !!albumId,
+function SchoolItems({ school }: { school: SchoolsOrder }) {
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['school', school.schoolId],
+        queryFn: () => getSchoolById(school.schoolId),
+        enabled: !!school.schoolId,
     });
 
-    if (isLoading) return <Skeleton className="h-24 w-full rounded-xl" />;
-    if (error) return (
-        <Alert variant="destructive" className="rounded-xl border-0 bg-red-50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Erro ao carregar álbum</AlertDescription>
-        </Alert>
-    );
-
     return (
-        <div className="rounded-xl p-4">
-            <div className="flex flex-col items-start gap-3">
-                <div className="flex gap-3">
-                    <div className="bg-emerald-100 dark:bg-emerald-600 p-2.5 rounded-lg">
-                        <BookOpen className="h-5 w-5 text-emerald-600 dark:text-white" />
+        <SectionCard
+            title={
+                <span className="flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                    {isLoading ? <Skeleton className="h-4 w-48" /> : error ? "Escola" : data?.name}
+                </span>
+            }
+            action={data && (
+                <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">{data.city} - {data.state}</span>
+            )}
+        >
+            <div className="divide-y">
+                {school.albums.map((album, index) => (
+                    <div key={index} className="py-5 first:pt-0 last:pb-0">
+                        <AlbumItems album={album} />
                     </div>
-                    <div className="flex items-center gap-1.5 text-sm ">
-                        <h5 className="font-semibold">{album?.name}</h5>
-                        <Image className="h-4 w-4" />
-                        <span className="text-gray-400">{stickers.length} figurinhas</span>
-                    </div>
+                ))}
+            </div>
+        </SectionCard>
+    );
+}
+
+function CopyId({ id }: { id: string }) {
+    const [copied, setCopied] = useState(false);
+    return (
+        <button
+            type="button"
+            onClick={() => {
+                navigator.clipboard?.writeText(id).then(() => {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1500);
+                });
+            }}
+            className="inline-flex items-center gap-1 font-mono text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+            title="Copiar ID"
+        >
+            {id}
+            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+        </button>
+    );
+}
+
+function Row({ label, children, strong }: { label: string; children: React.ReactNode; strong?: boolean }) {
+    return (
+        <div className={cn("flex items-baseline justify-between gap-3 text-sm", strong && "text-base font-semibold")}>
+            <span className={cn(!strong && "text-muted-foreground")}>{label}</span>
+            <span className="text-right">{children}</span>
+        </div>
+    );
+}
+
+function CustomerCard({ order }: { order: OrderSummary }) {
+    const { customer } = order;
+    const address = customer.address;
+    return (
+        <SectionCard title="Cliente">
+            <div className="space-y-4 text-sm">
+                <div>
+                    <p className="font-medium">{customer.name || "Sem nome"}</p>
+                    {customer.email && (
+                        <a href={`mailto:${customer.email}`} className="mt-0.5 inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground break-all">
+                            <Mail className="h-3.5 w-3.5 shrink-0" />
+                            {customer.email}
+                        </a>
+                    )}
                 </div>
-                {stickers.length > 0 && (
-                    <StickersList stickers={stickers} />
+                {address && (address.street || address.city) && (
+                    <div className="flex gap-2 border-t pt-4">
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                        <div className="leading-relaxed">
+                            <p>{address.street}{address.number && `, ${address.number}`}</p>
+                            {address.complement && <p>{address.complement}</p>}
+                            {address.neighborhood && <p>{address.neighborhood}</p>}
+                            <p>{address.city}{address.state && ` - ${address.state}`}</p>
+                            {address.postalCode && <p className="text-muted-foreground">CEP {address.postalCode}</p>}
+                        </div>
+                    </div>
                 )}
             </div>
-        </div>
+        </SectionCard>
     );
 }
 
-function OrderSummaryStats({ order }: { order: OrderSummary }) {
-    const stats = [
-        {
-            label: "Álbuns",
-            value: order.totalAlbums,
-            icon: BookOpen,
-            color: "purple",
-            iconBg: "bg-purple-100",
-            darkIconBg: "dark:bg-purple-600",
-            iconColor: "text-purple-600",
-            darkIconColor: "dark:text-white",
-            valueColor: "text-purple-700"
-        },
-        {
-            label: "Figurinhas",
-            value: order.totalStickers,
-            icon: Image,
-            color: "orange",
-            iconBg: "bg-orange-100",
-            darkIconBg: "dark:bg-orange-600",
-            iconColor: "text-orange-600",
-            darkIconColor: "dark:text-white",
-            valueColor: "text-orange-700"
-        },
-        {
-            label: "Total",
-            value: `R$ ${order.priceTotal.toFixed(2)}`,
-            icon: DollarSign,
-            color: "green",
-            iconBg: "bg-green-100",
-            darkIconBg: "dark:bg-green-600",
-            iconColor: "text-green-600",
-            darkIconColor: "dark:text-white",
-            valueColor: "text-green-700"
-        }
-    ];
-
+function SummaryCard({ order }: { order: OrderSummary }) {
+    const hasDiscount = !!order.discount && order.discount > 0;
+    const hasOnlinePayment = order.paymentStatus && order.paymentStatus !== "notStarted";
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {order.customer.name && (
-                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 col-span-full">
-                    <CardContent className={`p-6 rounded-xl`}>
-                        <div className="flex items-center gap-4">
-                            <div className={`bg-blue-100 dark:bg-blue-600 p-3 rounded-xl`}>
-                                <User className={`h-6 w-6 text-blue-600 dark:text-white`} />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Cliente</p>
-                                <p className={`text-lg font-semibold`}>{order.customer.name}</p>
-                                <p className={`text-sm text-gray-600`}>{order.customer.email}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-            {order.customer.name && (
-                <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 col-span-full">
-                    <CardContent className={`p-6 rounded-xl`}>
-                        <div className="flex items-center gap-4">
-                            <div className={`bg-yellow-100 dark:bg-yellow-600 p-3 rounded-xl`}>
-                                <MapPin className={`h-6 w-6 text-yellow-600 dark:text-white`} />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">Endereço</p>
-                                <p className={`text-sm `}><span className="text-yellow-700 font-bold">Rua: </span>{order.customer.address.street}, {order.customer.address.number}</p>
-                                {order.customer.address.complement && (<p className={`text-sm`}><span className="text-yellow-700 font-bold ">Complemento: </span>{order.customer.address.complement}</p>)}
-                                <p className="text-sm">{order.customer.address.state} - {order.customer.address.city}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {stats.map((stat, index) => (
-                <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
-                    <CardContent className={`p-6 rounded-xl`}>
-                        <div className="flex items-center gap-4">
-                            <div className={`${stat.iconBg} ${stat.darkIconBg} p-3 rounded-xl`}>
-                                <stat.icon className={`h-6 w-6 ${stat.iconColor} ${stat.darkIconColor}`} />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-600 mb-1">{stat.label}</p>
-                                <p className={`text-2xl font-bold ${stat.valueColor}`}>{stat.value}</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
-
-        </div>
+        <SectionCard title="Resumo">
+            <div className="space-y-2.5">
+                <Row label="Álbuns">{order.totalAlbums}</Row>
+                <Row label="Figurinhas">{order.totalStickers}</Row>
+                {hasDiscount && (
+                    <>
+                        <Row label="Subtotal">{formatPrice(order.subtotal ?? order.priceTotal + order.discount!)}</Row>
+                        <Row label={order.couponCode ? `Cupom ${order.couponCode}` : "Desconto"}>
+                            <span className="text-green-700 dark:text-green-400">- {formatPrice(order.discount!)}</span>
+                        </Row>
+                    </>
+                )}
+                <div className="border-t pt-2.5">
+                    <Row label="Total" strong>{formatPrice(order.priceTotal)}</Row>
+                </div>
+                {hasOnlinePayment && (
+                    <div className="space-y-2.5 border-t pt-2.5">
+                        <Row label="Pagamento">{PAYMENT_STATUS_LABELS[order.paymentStatus]}</Row>
+                        {order.paidAt && <Row label="Pago em">{formatDateTime(order.paidAt)}</Row>}
+                        {!order.paidAt && order.paymentExpiresAt && order.paymentStatus === "awaitingPayment" && (
+                            <Row label="Pix expira em">{formatDateTime(order.paymentExpiresAt)}</Row>
+                        )}
+                        {order.paymentProviderOrderId && (
+                            <Row label="ID Mercado Pago"><span className="font-mono text-xs">{order.paymentProviderOrderId}</span></Row>
+                        )}
+                    </div>
+                )}
+            </div>
+        </SectionCard>
     );
 }
 
@@ -215,6 +222,7 @@ async function downloadOrderSpreadsheet(order: OrderSummary, orderSummaryId: str
         // Aba 1: Resumo do Pedido
         const summaryData = [
             ['ID do Pedido', orderSummaryId],
+            ['Status', orderStatusInfo(order.status).label],
             ['Nome do Cliente', order.customer.name || ''],
             ['Email do Cliente', order.customer.email || ''],
             ['Rua', order.customer.address.street || ''],
@@ -283,132 +291,97 @@ async function downloadOrderSpreadsheet(order: OrderSummary, orderSummaryId: str
     }
 }
 
+// Goes back so the list keeps its filters; falls back to the list when the page was opened directly.
+function BackLink() {
+    const navigate = useNavigate();
+    return (
+        <button
+            type="button"
+            onClick={() => (window.history.state?.idx > 0 ? navigate(-1) : navigate("/orders"))}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground cursor-pointer"
+        >
+            <ArrowLeft className="h-4 w-4" />
+            Pedidos
+        </button>
+    );
+}
+
 export default function DetailsPage() {
     const { orderSummaryId } = useParams<{ orderSummaryId: string }>();
-    const navigate = useNavigate();
 
     const { data: order, isLoading, error } = useQuery({
         queryKey: ['orderSummary', orderSummaryId],
         queryFn: () => getOrderSummaryById(orderSummaryId!),
     });
 
-    const handleDownloadSpreadsheet = () => {
-        if (order && orderSummaryId) {
-            downloadOrderSpreadsheet(order, orderSummaryId);
-        }
-    };
-
     if (isLoading) {
         return (
-            <div className="min-h-screen ">
-                <div className="container mx-auto p-6 max-w-6xl">
-                    <div className="space-y-8">
-                        <div className="space-y-3">
-                            <Skeleton className="h-10 w-80 rounded-xl" />
-                            <Skeleton className="h-5 w-96 rounded-lg" />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <Skeleton className="h-32 rounded-xl" />
-                            <Skeleton className="h-32 rounded-xl" />
-                            <Skeleton className="h-32 rounded-xl" />
-                        </div>
-                        <Skeleton className="h-96 rounded-xl" />
-                    </div>
+            <div className="mx-auto max-w-6xl space-y-6">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-72" />
+                <div className="grid gap-6 lg:grid-cols-3">
+                    <Skeleton className="h-96 rounded-xl lg:col-span-2" />
+                    <Skeleton className="h-96 rounded-xl" />
                 </div>
             </div>
         );
     }
 
-    if (error) {
+    if (error || !order) {
         return (
-            <div className="min-h-screen">
-                <div className="container mx-auto p-6 max-w-6xl">
-                    <Alert variant="destructive" className="rounded-xl border-0 bg-red-50">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                            Não foi possível carregar os detalhes do pedido. Tente novamente.
-                        </AlertDescription>
-                    </Alert>
-                </div>
+            <div className="mx-auto max-w-6xl space-y-4">
+                <BackLink />
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                        Não foi possível carregar os detalhes do pedido. Tente novamente.
+                    </AlertDescription>
+                </Alert>
             </div>
         );
     }
+
+    const shortId = order.id.slice(-8);
 
     return (
-        <div className="container mx-auto max-w-6xl">
-            <div className="mb-8">
-                <div className="flex flex-col md:flex-row gap-3 items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                        <Button
-                            variant="outline"
-                            className="mr-2 flex items-center"
-                            onClick={() => navigate(-1)}
-                        >
-                            <ArrowLeft className="h-4 w-4 mr-1" />
-                            Voltar
-                        </Button>
-                        <div className="bg-blue-100 dark:bg-blue-600 p-3 rounded-xl">
-                            <Package className="h-7 w-7 text-blue-600 dark:text-white" />
+        <div className="mx-auto max-w-6xl space-y-6">
+            <div className="space-y-3">
+                <BackLink />
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h1 className="text-2xl font-bold">Pedido #{shortId}</h1>
+                            <OrderStatusBadge status={order.status} className="text-sm" />
                         </div>
-                        <div>
-                            <h1 className="text-md md:text-2xl font-bold mb-1">
-                                Pedido #{orderSummaryId}
-                            </h1>
-                            <p className="text-gray-600">Visualize todos os detalhes do seu pedido</p>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                            {order.createdAt && <span>Criado em {formatDateTime(order.createdAt)}</span>}
+                            <CopyId id={order.id} />
                         </div>
                     </div>
-
-                    {order && (
-                        <Button
-                            onClick={handleDownloadSpreadsheet}
-                            className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-                        >
-                            <Download className="h-4 w-4 mr-2" />
-                            Baixar Planilha
-                        </Button>
-                    )}
+                    <Button variant="outline" onClick={() => downloadOrderSpreadsheet(order, order.id)} className="cursor-pointer">
+                        <Download className="h-4 w-4" />
+                        Baixar planilha
+                    </Button>
                 </div>
             </div>
 
-            {order ? (
-                <>
-                    <OrderSummaryStats order={order} />
-                    <div className="space-y-2">
-                        {order.schools.map((school, schoolIndex) => (
-                            <Card key={schoolIndex} className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
-                                <CardContent className="rounded-xl">
-                                    <div className="space-y-6">
-                                        <SchoolDetails schoolId={school.schoolId} />
-
-                                        {school.albums.length > 0 && (
-                                            <div className="space-y-4">
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <h3 className="text-lg font-semibold">
-                                                        Álbuns ({school.albums.length})
-                                                    </h3>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    {school.albums.map((album, albumIndex) => (
-                                                        <AlbumDetails key={albumIndex} albumId={album.albumId} stickers={album.stickers} />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+            <div className="grid items-start gap-6 lg:grid-cols-3">
+                <div className="order-2 space-y-6 lg:order-1 lg:col-span-2">
+                    <div className="flex items-baseline justify-between">
+                        <h2 className="text-lg font-semibold">Itens do pedido</h2>
+                        <span className="text-sm text-muted-foreground">
+                            {order.totalAlbums} {order.totalAlbums === 1 ? "álbum" : "álbuns"} · {order.totalStickers} figurinhas
+                        </span>
                     </div>
-                </>
-            ) : (
-                <Card className="border-0 shadow-sm text-center py-16 bg-white rounded-xl">
-                    <CardContent>
-                        <div className="text-gray-300 text-6xl mb-6">📋</div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">Nenhum pedido encontrado</h3>
-                        <p className="text-gray-600">Você ainda não possui pedidos registrados.</p>
-                    </CardContent>
-                </Card>
-            )}
+                    {order.schools.map((school, index) => <SchoolItems key={index} school={school} />)}
+                </div>
+
+                <aside className="order-1 space-y-6 lg:order-2">
+                    <OrderStatusCard key={`${order.id}-${order.status}`} order={order} />
+                    <CustomerCard order={order} />
+                    <SummaryCard order={order} />
+                </aside>
+            </div>
         </div>
     );
 }
