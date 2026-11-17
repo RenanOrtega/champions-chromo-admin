@@ -15,6 +15,7 @@ export type OrderSummary = {
     paymentExpiresAt?: string | null
     paidAt?: string | null
     createdAt: string
+    archivedAt?: string | null
 }
 
 export type OrderStatus =

@@ -2,15 +2,21 @@
 
 import { OrderStatusBadge } from "@/components/order-status-badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { useArchiveOrders } from "@/hooks/use-archive-orders";
 import { useUpdateOrderStatus } from "@/hooks/use-update-order-status";
 import { NEXT_STEP, STATUS_TABS, formatDateTime, formatPrice } from "@/lib/order-status";
 import { cn } from "@/lib/utils";
 import { getOrdersSummary } from "@/services/order";
+import { getSchools } from "@/services/school";
 import type { OrderSummary } from "@/types/order";
 import { useQuery } from "@tanstack/react-query";
 import {
+    Archive,
+    ArchiveRestore,
     ArrowDownWideNarrow,
     ArrowUpWideNarrow,
     ChevronLeft,
@@ -24,7 +30,7 @@ import {
     Send,
     Wallet,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
 const PAGE_SIZE = 20;
@@ -97,6 +103,96 @@ function QuickAction({ order }: { order: OrderSummary }) {
     );
 }
 
+function ArchiveButton({ order }: { order: OrderSummary }) {
+    const mutation = useArchiveOrders();
+    const archived = !!order.archivedAt;
+    const label = archived ? "Desarquivar" : "Arquivar";
+
+    return (
+        <Button
+            size="sm"
+            variant="ghost"
+            title={label}
+            aria-label={label}
+            disabled={mutation.isPending}
+            onClick={(e) => {
+                e.stopPropagation();
+                mutation.mutate({ ids: [order.id], archived: !archived });
+            }}
+            className="cursor-pointer text-muted-foreground"
+        >
+            {mutation.isPending
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+            {archived && <span>Desarquivar</span>}
+        </Button>
+    );
+}
+
+function ArchivedBadge() {
+    return (
+        <span className="inline-flex items-center gap-1 rounded-full border bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
+            <Archive className="h-3 w-3" />
+            Arquivado
+        </span>
+    );
+}
+
+// Archives every non-archived order currently shown for the selected school (respects tab and search).
+function ArchiveSchoolButton({ orders, schoolName }: { orders: OrderSummary[]; schoolName: string }) {
+    const [open, setOpen] = useState(false);
+    const mutation = useArchiveOrders();
+    const toArchive = orders.filter(o => !o.archivedAt);
+    const notShipped = toArchive.filter(o => !["shipped", "expired", "cancelled", "refunded"].includes(o.status ?? "new")).length;
+    const multiSchool = toArchive.filter(o => (o.schools?.length ?? 0) > 1).length;
+
+    if (toArchive.length === 0) return null;
+
+    return (
+        <>
+            <Button variant="outline" onClick={() => setOpen(true)} className="cursor-pointer">
+                <Archive className="h-4 w-4" />
+                Arquivar todos desta escola ({toArchive.length})
+            </Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Arquivar {toArchive.length} pedido{toArchive.length === 1 ? "" : "s"}?</DialogTitle>
+                        <DialogDescription>
+                            Os pedidos de {schoolName} que aparecem na lista (com a aba e a busca atuais) vão sair da lista.
+                            Eles continuam salvos e voltam com "Mostrar arquivados".
+                        </DialogDescription>
+                    </DialogHeader>
+                    {(notShipped > 0 || multiSchool > 0) && (
+                        <ul className="list-disc space-y-1 pl-5 text-sm text-amber-700 dark:text-amber-400">
+                            {notShipped > 0 && (
+                                <li>{notShipped} ainda não {notShipped === 1 ? "foi enviado" : "foram enviados"}.</li>
+                            )}
+                            {multiSchool > 0 && (
+                                <li>{multiSchool} também {multiSchool === 1 ? "tem" : "têm"} álbuns de outra escola.</li>
+                            )}
+                        </ul>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setOpen(false)} className="cursor-pointer">Cancelar</Button>
+                        <Button
+                            disabled={mutation.isPending}
+                            onClick={() => mutation.mutate(
+                                { ids: toArchive.map(o => o.id), archived: true },
+                                { onSuccess: () => setOpen(false) }
+                            )}
+                            className="cursor-pointer"
+                        >
+                            {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4" />}
+                            Arquivar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
+    );
+}
+
 function AlbumsCell({ order }: { order: OrderSummary }) {
     const names = albumNames(order);
     const shown = names.slice(0, 2);
@@ -123,6 +219,8 @@ export default function OrderSummaryPage() {
     const search = searchParams.get("q") ?? "";
     const oldestFirst = searchParams.get("sort") === "oldest";
     const page = Math.max(0, Number(searchParams.get("page")) || 0);
+    const schoolId = searchParams.get("school") ?? "";
+    const showArchived = searchParams.get("archived") === "1";
 
     const updateParams = (changes: Record<string, string | null>) => {
         const params = new URLSearchParams(searchParams);
@@ -134,10 +232,30 @@ export default function OrderSummaryPage() {
         setSearchParams(params, { replace: true });
     };
 
-    const { data = [], isLoading, isFetching, error, refetch } = useQuery({
-        queryKey: ["ordersSummary"],
-        queryFn: getOrdersSummary,
+    const { data: allOrders = [], isLoading, isFetching, error, refetch } = useQuery({
+        queryKey: ["ordersSummary", { archived: showArchived }],
+        queryFn: () => getOrdersSummary(showArchived),
     });
+
+    const { data: schools = [] } = useQuery({
+        queryKey: ["schools"],
+        queryFn: getSchools,
+    });
+
+    // Only schools that have orders in the current list, sorted by name.
+    const schoolOptions = useMemo(() => {
+        const ids = new Set(allOrders.flatMap(o => o.schools?.map(s => s.schoolId) ?? []));
+        return schools
+            .filter(s => ids.has(s.id) || s.id === schoolId)
+            .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    }, [allOrders, schools, schoolId]);
+    const selectedSchool = schools.find(s => s.id === schoolId);
+
+    // The school filter applies to the cards and tab counters too, so they describe that school.
+    const data = useMemo(
+        () => schoolId ? allOrders.filter(o => o.schools?.some(s => s.schoolId === schoolId)) : allOrders,
+        [allOrders, schoolId]
+    );
 
     const countFor = (statuses: string[] | null) =>
         statuses ? data.filter(o => statuses.includes(o.status ?? "new")).length : data.length;
@@ -186,7 +304,9 @@ export default function OrderSummaryPage() {
                 <div>
                     <h1 className="text-2xl font-bold">Pedidos</h1>
                     <p className="text-muted-foreground mt-1">
-                        {isLoading ? "Carregando..." : `${data.length} pedido${data.length !== 1 ? "s" : ""} no total`}
+                        {isLoading
+                            ? "Carregando..."
+                            : `${data.length} pedido${data.length !== 1 ? "s" : ""}${selectedSchool ? ` de ${selectedSchool.name}` : " no total"}${showArchived ? ", incluindo arquivados" : ""}`}
                     </p>
                 </div>
                 <Button variant="outline" onClick={() => refetch()} disabled={isFetching} className="cursor-pointer">
@@ -244,6 +364,17 @@ export default function OrderSummaryPage() {
                                 className="pl-9"
                             />
                         </div>
+                        <select
+                            value={schoolId}
+                            onChange={(e) => updateParams({ school: e.target.value })}
+                            aria-label="Filtrar por escola"
+                            className="h-9 w-full sm:w-auto sm:max-w-[260px] rounded-md border border-input bg-background px-3 text-sm shadow-xs cursor-pointer"
+                        >
+                            <option value="">Todas as escolas</option>
+                            {schoolOptions.map(s => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                        </select>
                         <Button
                             variant="ghost"
                             onClick={() => updateParams({ sort: oldestFirst ? null : "oldest" })}
@@ -252,6 +383,18 @@ export default function OrderSummaryPage() {
                             {oldestFirst ? <ArrowUpWideNarrow className="h-4 w-4" /> : <ArrowDownWideNarrow className="h-4 w-4" />}
                             {oldestFirst ? "Mais antigos primeiro" : "Mais recentes primeiro"}
                         </Button>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                            <Switch
+                                checked={showArchived}
+                                onCheckedChange={(checked) => updateParams({ archived: checked ? "1" : null })}
+                            />
+                            Mostrar arquivados
+                        </label>
+                        {selectedSchool && !isLoading && (
+                            <ArchiveSchoolButton orders={filtered} schoolName={selectedSchool.name} />
+                        )}
                     </div>
                 </div>
 
@@ -283,7 +426,10 @@ export default function OrderSummaryPage() {
                                     <tr
                                         key={order.id}
                                         onClick={() => goDetails(order.id)}
-                                        className="border-b last:border-0 hover:bg-muted/50 cursor-pointer"
+                                        className={cn(
+                                            "border-b last:border-0 hover:bg-muted/50 cursor-pointer",
+                                            order.archivedAt && "opacity-60"
+                                        )}
                                     >
                                         <td className="px-4 py-3 align-top">
                                             <p className="font-mono text-xs font-semibold">#{order.id.slice(-8)}</p>
@@ -303,10 +449,16 @@ export default function OrderSummaryPage() {
                                             )}
                                         </td>
                                         <td className="px-4 py-3 align-top">
-                                            <OrderStatusBadge status={order.status} />
+                                            <div className="flex flex-col items-start gap-1">
+                                                <OrderStatusBadge status={order.status} />
+                                                {order.archivedAt && <ArchivedBadge />}
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3 align-top text-right">
-                                            <QuickAction order={order} />
+                                            <div className="flex items-center justify-end gap-1">
+                                                {!order.archivedAt && <QuickAction order={order} />}
+                                                <ArchiveButton order={order} />
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -316,7 +468,11 @@ export default function OrderSummaryPage() {
                         {/* Mobile */}
                         <ul className="md:hidden divide-y">
                             {pageItems.map(order => (
-                                <li key={order.id} onClick={() => goDetails(order.id)} className="p-4 space-y-2 cursor-pointer active:bg-muted/50">
+                                <li
+                                    key={order.id}
+                                    onClick={() => goDetails(order.id)}
+                                    className={cn("p-4 space-y-2 cursor-pointer active:bg-muted/50", order.archivedAt && "opacity-60")}
+                                >
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
                                             <p className="font-medium truncate">{order.customer?.name || "Sem nome"}</p>
@@ -328,8 +484,14 @@ export default function OrderSummaryPage() {
                                     </div>
                                     <AlbumsCell order={order} />
                                     <div className="flex items-center justify-between gap-2">
-                                        <OrderStatusBadge status={order.status} />
-                                        <QuickAction order={order} />
+                                        <div className="flex flex-wrap items-center gap-1">
+                                            <OrderStatusBadge status={order.status} />
+                                            {order.archivedAt && <ArchivedBadge />}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            {!order.archivedAt && <QuickAction order={order} />}
+                                            <ArchiveButton order={order} />
+                                        </div>
                                     </div>
                                 </li>
                             ))}
