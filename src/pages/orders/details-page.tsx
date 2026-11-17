@@ -9,12 +9,15 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
     AlertCircle,
+    Archive,
+    ArchiveRestore,
     ArrowLeft,
     BookOpen,
     Check,
     Copy,
     Download,
     GraduationCap,
+    Loader2,
     Mail,
     MapPin,
 } from "lucide-react";
@@ -26,6 +29,7 @@ import { OrderStatusBadge } from "@/components/order-status-badge";
 import { PAYMENT_STATUS_LABELS, formatDateTime, formatPrice, orderStatusInfo } from "@/lib/order-status";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useArchiveOrders } from "@/hooks/use-archive-orders";
 
 const STICKER_TYPE_LABELS: Record<StickersOrder["type"], string> = {
     a4: "A4",
@@ -291,6 +295,24 @@ async function downloadOrderSpreadsheet(order: OrderSummary, orderSummaryId: str
     }
 }
 
+function ArchiveOrderButton({ order }: { order: OrderSummary }) {
+    const mutation = useArchiveOrders();
+    const archived = !!order.archivedAt;
+    return (
+        <Button
+            variant="outline"
+            disabled={mutation.isPending}
+            onClick={() => mutation.mutate({ ids: [order.id], archived: !archived })}
+            className="cursor-pointer"
+        >
+            {mutation.isPending
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : archived ? <ArchiveRestore className="h-4 w-4" /> : <Archive className="h-4 w-4" />}
+            {archived ? "Desarquivar" : "Arquivar"}
+        </Button>
+    );
+}
+
 // Goes back so the list keeps its filters; falls back to the list when the page was opened directly.
 function BackLink() {
     const navigate = useNavigate();
@@ -352,16 +374,25 @@ export default function DetailsPage() {
                         <div className="flex flex-wrap items-center gap-3">
                             <h1 className="text-2xl font-bold">Pedido #{shortId}</h1>
                             <OrderStatusBadge status={order.status} className="text-sm" />
+                            {order.archivedAt && (
+                                <span className="inline-flex items-center gap-1 rounded-full border bg-muted px-2.5 py-0.5 text-sm font-medium text-muted-foreground">
+                                    <Archive className="h-3.5 w-3.5" />
+                                    Arquivado em {formatDateTime(order.archivedAt)}
+                                </span>
+                            )}
                         </div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                             {order.createdAt && <span>Criado em {formatDateTime(order.createdAt)}</span>}
                             <CopyId id={order.id} />
                         </div>
                     </div>
-                    <Button variant="outline" onClick={() => downloadOrderSpreadsheet(order, order.id)} className="cursor-pointer">
-                        <Download className="h-4 w-4" />
-                        Baixar planilha
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        <ArchiveOrderButton order={order} />
+                        <Button variant="outline" onClick={() => downloadOrderSpreadsheet(order, order.id)} className="cursor-pointer">
+                            <Download className="h-4 w-4" />
+                            Baixar planilha
+                        </Button>
+                    </div>
                 </div>
             </div>
 
